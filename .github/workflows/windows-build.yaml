@@ -30,6 +30,7 @@ jobs:
     - name: Compile resources
       run: |
         venv\Scripts\activate
+        cd timegroup
         python compile_resources.py
 
     - name: Build with PyInstaller
