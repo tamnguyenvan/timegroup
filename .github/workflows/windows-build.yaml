@@ -30,7 +30,6 @@ jobs:
     - name: Compile resources
       run: |
         venv\Scripts\activate
-        cd timegroup
         python compile_resources.py
 
     - name: Build with PyInstaller
@@ -57,7 +56,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: TimeGroup-Setup-${{ github.ref_name }}.exe
-        path: D:\a\timegroup\timegroup\packaging\windows\Output\TimeGroup-Setup-*.exe
+        path: D:\a\timegroup\timegroup\packaging\Output\TimeGroup-Setup-*.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
