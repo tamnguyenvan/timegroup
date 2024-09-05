@@ -39,7 +39,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="../../timegroup/esources/icons/timegroup.ico"
+    icon="../../timegroup/resources/icons/timegroup.ico"
 )
 coll = COLLECT(
     exe,
