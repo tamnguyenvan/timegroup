@@ -10,7 +10,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('../../config.yaml', 'config.yaml'),
+        ('../../timegroup/config.yaml', '.'),
         *tcl_tk_data,
     ],
     hiddenimports=[],
@@ -39,7 +39,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="../../resources/icons/timegroup.ico"
+    icon="../../timegroup/esources/icons/timegroup.ico"
 )
 coll = COLLECT(
     exe,

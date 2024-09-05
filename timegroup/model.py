@@ -1,3 +1,6 @@
+import os
+import sys
+from pathlib import Path
 from PySide6.QtCore import QObject, Slot, Signal
 import yaml
 
@@ -7,7 +10,15 @@ def load_config(config_file):
         config = yaml.safe_load(config_file)
     return config
 
-config = load_config("config.yaml")
+if getattr(sys, 'frozen', False):
+    # If running in a PyInstaller bundle
+    base_path = Path(sys._MEIPASS)
+else:
+    # If running in a regular Python environment
+    base_path = Path(__file__).resolve().parent
+
+config_path = os.path.join(base_path, "config.yaml")
+config = load_config(config_path)
 
 class ReportModel(QObject):
     reportGenerated = Signal(str)
