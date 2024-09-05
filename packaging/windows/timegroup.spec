@@ -6,7 +6,7 @@ from PyInstaller.utils.hooks import collect_data_files
 tcl_tk_data = collect_data_files('tkinter')
 
 a = Analysis(
-    ['../timegroup/main.py'],
+    ['../../timegroup/main.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -39,7 +39,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="../resources/icons/timegroup.ico"
+    icon="../../resources/icons/timegroup.ico"
 )
 coll = COLLECT(
     exe,
