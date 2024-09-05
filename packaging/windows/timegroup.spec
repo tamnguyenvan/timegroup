@@ -10,7 +10,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('../config.yaml', 'config.yaml'),
+        ('../../config.yaml', 'config.yaml'),
         *tcl_tk_data,
     ],
     hiddenimports=[],
