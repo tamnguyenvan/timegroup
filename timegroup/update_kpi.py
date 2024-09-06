@@ -23,7 +23,7 @@ def request_orders_data(shop_id, start_date, end_date):
             if parsed_order:
                 orders_data.append(parsed_order)
 
-        print(f'Page: {page_number}/{total_pages}')
+        print(f'Shop {shop_id} #page: {page_number}/{total_pages}')
         page_number += 1
 
     return orders_data

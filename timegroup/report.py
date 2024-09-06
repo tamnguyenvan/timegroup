@@ -1,10 +1,13 @@
 from openpyxl import Workbook
 from datetime import datetime
-from timegroup.utils.datetime_utils import get_timestamps_for_date
 from timegroup.utils.pancake_utils import get_shop_orders
+from loguru import logger
 
-def request_orders_data(shop_id, start_date, end_date):
+def request_orders_data(credentials, start_date, end_date):
+    shop_id = credentials["shop_id"]
+    api_key = credentials["api_key"]
     orders_data = []
+    logger.debug(f"Processing shop {shop_id}")
 
     page_number = 1
     total_pages = 1000
@@ -13,14 +16,15 @@ def request_orders_data(shop_id, start_date, end_date):
             "updateStatus": 1,
             "startDateTime": start_date,
             "endDateTime": end_date,
-            "page_number": page_number
+            "page_number": page_number,
+            "page_size": 100
         }
-        orders, total_pages = get_shop_orders(shop_id, params)
-        print(f'Page: {page_number}/{total_pages}')
-        page_number += 1
-
+        orders, total_pages = get_shop_orders(shop_id, params, api_key=api_key)
         if orders is None:
-            continue
+            break
+
+        logger.debug(f'Shop {shop_id} page: {page_number}/{total_pages}')
+        page_number += 1
 
         orders_data += orders
 
@@ -30,7 +34,7 @@ def format_updated_at(updated_at_str):
     dt = datetime.fromisoformat(updated_at_str)
     return dt.strftime("%d/%m/%Y %H:%M")
 
-def save_orders_data(outfile, orders_data):
+def write_order_report(outfile, orders_data):
     # Create a workbook and select the active worksheet
     wb = Workbook()
     ws = wb.active
@@ -45,11 +49,19 @@ def save_orders_data(outfile, orders_data):
         items = order.get("items", [])
         for i, item in enumerate(items):
             count += 1
-            print('count', count)
             row = ["" for _ in range(len(column_names))]
             if i == 0:
                 # Fill the first three columns for the first item in the order
-                row[0] = format_updated_at(order["updated_at"])
+                status_history = order.get("status_history", [])
+                created_order_date = None
+                for status_data in status_history:
+                    if status_data.get("status") == 1:
+                        created_order_date = status_data["updated_at"]
+
+                if created_order_date is None:
+                    continue
+
+                row[0] = format_updated_at(created_order_date)
                 row[1] = order["cod"]
                 row[2] = order["total_quantity"]
 
@@ -58,7 +70,8 @@ def save_orders_data(outfile, orders_data):
             variation_info = item["variation_info"]
             row[4] = variation_info["product_display_id"]
             name = variation_info["name"]
-            row[5] = " / ".join([name] + [field["name"] + ": " + field["value"] for field in variation_info["fields"]])
+            if variation_info["fields"]:
+                row[5] = " / ".join([name] + [field["name"] + ": " + field["value"] for field in variation_info["fields"]])
             row[6] = variation_info["display_id"]
 
             # Append the row to the worksheet
@@ -66,14 +79,5 @@ def save_orders_data(outfile, orders_data):
 
     # Save the workbook to the specified file
     wb.save(outfile)
-
-
-def create_report(shop_id, time_period, outfile):
-    start_date, end_date = time_period
-    start_date, end_date = get_timestamps_for_date(date="yesterday")
-
-    orders_data = request_orders_data(shop_id, start_date, end_date)
-    print(len(orders_data))
-
-    save_orders_data(outfile, orders_data)
-    return outfile
+    logger.debug("Total count", count)
+    logger.debug("Done!")

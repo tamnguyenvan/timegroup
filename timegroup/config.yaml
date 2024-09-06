@@ -1,6 +1,21 @@
-pancake_api_endpoint: https://pos.pages.fm/api/v1
-pancake_api_keys:
-  2am: 8d4ad058163548738fd2c3c5b40e13d3
-  time_brand: c17cef5f3419419f9d02cd36c7926674
-  6am_group: e6a0aa6862b6418ba23375f020da8ba2
-  winner_group: b0cb796a94594517aca34a9b1ba6bb1b
+api_endpoint: https://pos.pages.fm/api/v1
+shops:
+  2am:
+    id: 20002121
+    api_key: 8d4ad058163548738fd2c3c5b40e13d3
+    name: 2AM
+
+  # time_brand:
+  #   id: 100017797
+  #   api_key: c17cef5f3419419f9d02cd36c7926674
+  #   name: Time Brand
+
+  # 6am_group:
+  #   id: 2077691
+  #   api_key: e6a0aa6862b6418ba23375f020da8ba2
+  #   name: 6AM Group
+
+  # winner_group:
+  #   id: 230361475
+  #   api_key: b0cb796a94594517aca34a9b1ba6bb1b
+  #   name: Winner Group

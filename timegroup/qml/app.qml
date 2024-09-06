@@ -3,82 +3,133 @@ import QtQuick.Controls 6.7
 import QtQuick.Layouts 6.7
 import QtQuick.Controls.Material 6.7
 
+
 ApplicationWindow {
+    id: window
     visible: true
     width: 800
-    height: 450
-    x: (Screen.width - width) / 2
-    y: (Screen.height - height) / 2
-    title: "TimeGroup Report Studio"
-    readonly property string accentColor: "#545eee"
-
+    height: 600
+    minimumWidth: width
+    minimumHeight: height
+    maximumWidth: width
+    maximumHeight: height
+    title: qsTr("TimeGroup Report Generator")
     Material.theme: Material.Light
-    Material.primary: accentColor
-    Material.accent: accentColor
+    Material.accent: "#4f46e5"
+    Material.primary: "#4f46e5"
 
     Rectangle {
         anchors.fill: parent
-        color: "#dbeafe"
-
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#dbeafe" }
+            GradientStop { position: 1.0; color: "#e0e7ff" }
+        }
         ColumnLayout {
-            anchors.fill: parent
-            spacing: 20
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 40, 400)
+            spacing: 24
 
             Text {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 50
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: qsTr("Báo cáo TimeGroup")
-                font.pixelSize: 24
+                text: qsTr("TimeGroup Report Studio")
+                font.pixelSize: 28
+                font.bold: true
+                color: "#4f46e5"
             }
 
-            GridLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.topMargin: 10
-                Layout.leftMargin: 20
-                Layout.rightMargin: 20
-                columns: 2
-                rowSpacing: 20
-                columnSpacing: 20
-
+                spacing: 16
                 Text {
                     text: qsTr("Loại báo cáo")
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: 14
+                    color: "#374151"
                 }
                 ComboBox {
-                    model: ["Báo cáo đơn hàng", "Báo cáo lợi nhuận"]
-                    implicitWidth: 200
+                    id: reportTypeCombo
+                    Layout.fillWidth: true
+                    model: [qsTr("Báo cáo đơn hàng"), qsTr("Báo cáo lợi nhuận")]
+                    font.pixelSize: 14
+                    Material.foreground: "#374151"
+                    Material.accent: "#4f46e5"
                 }
-
                 Text {
                     text: qsTr("Thời gian")
-                    horizontalAlignment: Text.AlignRight
-                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: 14
+                    color: "#374151"
                 }
                 ComboBox {
-                    model: ["Hôm qua", "Tháng trước", "Tháng trước + Tháng này"]
-                    implicitWidth: 200
+                    id: timeFrameCombo
+                    Layout.fillWidth: true
+                    model: [qsTr("Hôm qua"), qsTr("Tháng trước"), qsTr("Tháng trước + Tháng này")]
+                    font.pixelSize: 14
+                    Material.foreground: "#374151"
+                    Material.accent: "#4f46e5"
                 }
 
-                Item { // Empty item to place the button correctly in the grid
-                    Layout.columnSpan: 2
-                    Layout.alignment: Qt.AlignHCenter
-                    Button {
-                        text: qsTr("Xuất excel")
-                        width: 120
-                        Material.primary: accentColor
-                        Material.accent: accentColor
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                reportModel.exportReport("revenue", "yesterday")
+                Button {
+                    id: exportButton
+                    Layout.fillWidth: true
+                    text: qsTr("Xuất báo cáo")
+                    font.pixelSize: 16
+                    font.bold: true
+                    Material.background: Material.accent
+                    Material.foreground: "white"
+                    enabled: reportModel.isExporting === false
+
+                    contentItem: Item {
+                        implicitWidth: rowLayout.implicitWidth
+                        implicitHeight: rowLayout.implicitHeight
+
+                        RowLayout {
+                            id: rowLayout
+                            spacing: 8
+                            anchors.centerIn: parent
+
+                            Image {
+                                source: "qrc:/resources/icons/export.svg"
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                            }
+                            Text {
+                                text: exportButton.text
+                                color: exportButton.Material.foreground
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
                             }
                         }
                     }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            var timeFrame = timeFrameCombo.model[timeFrameCombo.currentIndex]
+
+                            var reportType = ""
+                            if (reportTypeCombo.currentIndex === 0) {
+                                reportType = "order"
+                            } else if (reportTypeCombo.currentIndex === 1) {
+                                reportType = "revenue"
+                            } else {
+
+                            }
+
+                            if (timeFrameCombo.currentIndex === 0) {
+                                timeFrame = "yesterday"
+                            } else if (timeFrameCombo.currentIndex === 1) {
+                                timeFrame = "last_month"
+                            } else if (timeFrameCombo.currentIndex === 2) {
+                                timeFrame = "last_month_and_current_month"
+                            }
+                            reportModel.exportReport(reportType, timeFrame)
+                        }
+                    }
+                }
+
+                Text {
+                    text: qsTr(reportModel.messageInfo)
                 }
             }
         }

@@ -10,8 +10,8 @@ load_dotenv()
 def request_pancake(path: str = None,
                     params: Optional[Dict] = None,
                     api_key: Optional[str] = None) -> Tuple:
-    endpoint = os.getenv("PANCAKE_ENDPOINT") or endpoint
-    api_key = os.getenv("PANCAKE_API_KEY") or api_key
+    endpoint = os.getenv("PANCAKE_ENDPOINT")
+    api_key = api_key
 
     try:
         url = f"{endpoint}/{path}"
@@ -30,8 +30,8 @@ def request_pancake(path: str = None,
         print(f"Error: {str(e)}")
         return False, str(e)
 
-def get_shop_orders(shop_id, params):
-    success, data = request_pancake(f"shops/{shop_id}/orders", params=params)
+def get_shop_orders(shop_id, params, api_key):
+    success, data = request_pancake(f"shops/{shop_id}/orders", params=params, api_key=api_key)
     if success:
         orders = data.get("data", [])
         total_pages = data.get("total_pages", 0)
