@@ -5,3 +5,4 @@ pyyaml
 loguru
 PySide6
 pyinstaller
+openpyxl
