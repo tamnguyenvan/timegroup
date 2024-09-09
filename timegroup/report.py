@@ -1,55 +1,85 @@
-from openpyxl import Workbook
+import re
 from datetime import datetime
+from timegroup.utils.spreadsheet_utils import get_service, replace_data, append_data
 
+class SpreadSheet:
+    def __init__(self, gid, reports):
+        self._gid = gid
+        self._reports = reports
+        self._service = get_service()
 
-def format_updated_at(updated_at_str):
-    dt = datetime.fromisoformat(updated_at_str)
-    return dt.strftime("%d/%m/%Y %H:%M")
+    def upload(self):
+        for report in self._reports:
+            sheet_name = report.name
+            data = report.data
+            range_name = f"{sheet_name}!{report.range_name}"
+
+            if report.update_policy == "replace":
+                result = replace_data(
+                    service=self._service,
+                    spreadsheet_id=self._gid,
+                    range_name=range_name,
+                    values=data
+                )
+            elif report.update_policy == "append":
+                result = append_data(
+                    service=self._service,
+                    spreadsheet_id=self._gid,
+                    range_name=range_name,
+                    values=data
+                )
+            else:
+                raise ValueError()
+
+    def rollback(self):
+        pass
 
 class Report:
     def __init__(self):
+        self._column_names = []
+        self._name = None
         self._data = {}
+        self._range_name = ""
+        self._udpate_policy = "replace"
 
     @property
     def data(self):
-        return self._data
+        return self._data[self._name]
 
-    @staticmethod
-    def merge(self, *reports):
-        for report in reports:
-            self._data.update(report.data)
-        return self
+    @property
+    def column_names(self):
+        return self._column_names
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def range_name(self):
+        return self._range_name
+
+    @property
+    def update_policy(self):
+        return self._udpate_policy
+
+    @property
+    def rows(self):
+        return len(self._data)
 
     def parse(self, raw_data):
         raise NotImplementedError
-
-    def save(self, outfile):
-        wb = Workbook()
-
-        for sheet_name, sheet_data in self._data.items():
-            # Load the existing workbook
-            if sheet_name in wb.sheetnames:
-                ws = wb[sheet_name]  # Use existing sheet
-            else:
-                ws = wb.create_sheet(title=sheet_name)
-
-            if len(sheet_data) == 0:
-                continue
-
-            for row in sheet_data:
-                ws.append(row)
-
-        wb.save(outfile)
 
 class POSReport(Report):
     def __init__(self):
         super().__init__()
         self._column_names = ["Ngày tạo đơn", "COD", "Tổng số lượng SP", "Số lượng", "Mã sản phẩm", "Mã Mẫu Mã"]
-        self._active = "POS"
-        self._data = {"POS": [self._column_names]}
+        self._name = "Pos"
+        self._data = {self._name: []}
+        self._range_name = "A2:F"
+        self._udpate_policy = "replace"
 
     def parse(self, raw_data):
-        data = self._data[self._active]
+        data = self._data[self._name]
 
         for order in raw_data:
             items = order.get("items", [])
@@ -87,11 +117,13 @@ class RemainProductReport(Report):
         self._column_names = [
             "MA_SP", "MA_MAU_MA", "TON_KHO", "Danh mục", "Tổng nhập"
         ]
-        self._active = "TỒN KHO"
-        self._data = {"TỒN KHO": [self._column_names]}
+        self._name = "TỒN KHO"
+        self._data = {self._name: []}
+        self._range_name = "A2:E"
+        self._udpate_policy = "replace"
 
     def parse(self, raw_data):
-        data = self._data[self._active]
+        data = self._data[self._name]
         for variation in raw_data:
             row = ["" for _ in range(len(self._column_names))]
 
@@ -117,7 +149,6 @@ class RemainProductReport(Report):
             data.append(row)
         return len(data)
 
-
 class AwaitingOrderReport(Report):
     def __init__(self):
         super().__init__()
@@ -125,11 +156,13 @@ class AwaitingOrderReport(Report):
             "Ngày tạo đơn", "Mã sản phẩm", "Mã Mẫu mã", "Sản phẩm", "Mã đơn hàng",
             "Tổng số lượng SP", "Số lượng", "Giá", "Giảm giá", "Tình trạng kho", "COD"
         ]
-        self._active = "CHỜ HÀNG"
-        self._data = {"CHỜ HÀNG": [self._column_names]}
+        self._name = "CHỜ HÀNG"
+        self._data = {self._name: []}
+        self._range_name = "C2:M"
+        self._udpate_policy = "replace"
 
     def parse(self, raw_data):
-        data = self._data[self._active]
+        data = self._data[self._name]
         for order in raw_data:
             items = order.get("items", [])
             for i, item in enumerate(items):
@@ -188,17 +221,18 @@ class GHTKOrderReport(Report):
     def __init__(self):
         super().__init__()
         self._partner_id = 1
-        self._partner_name = "GHTK"
         self._column_names = [
             "MVĐ", "Khách hàng", "SĐT", "Mã sản phẩm", "Mã mẫu mã", "Sản phẩm", "Tổng SL",
             "Số lượng", "COD", "Phí trả cho ĐVVC", "Facebook Page", "PAGE ID",
             "Người xử lý", "NV xác nhận", "Ngày tạo đơn", "Kho hàng", "Ngày gửi"
         ]
-        self._active = "Đơn Hàng GHTK"
-        self._data = {"Đơn Hàng GHTK": [self._column_names]}
+        self._name = "Đơn hàng ghtk"
+        self._data = {self._name: []}
+        self._range_name = "A3:Q"
+        self._udpate_policy = "replace"
 
     def parse(self, raw_data):
-        data = self._data[self._active]
+        data = self._data[self._name]
         partner_ids = set()
         for order in raw_data:
             partner = order.get("partner") or {}
@@ -293,11 +327,13 @@ class VTPOrderReport(Report):
             "Số lượng", "COD", "Phí trả cho ĐVVC", "Facebook Page", "PAGE ID",
             "Người xử lý", "NV xác nhận", "Ngày tạo đơn", "Kho hàng", "Ngày gửi"
         ]
-        self._active = "Đơn Hàng VTP"
-        self._data = {"Đơn Hàng VTP": [self._column_names]}
+        self._name = "Đơn hàng vtp"
+        self._data = {self._name: []}
+        self._range_name = "A3:Q"
+        self._udpate_policy = "replace"
 
     def parse(self, raw_data):
-        data = self._data[self._active]
+        data = self._data[self._name]
         for order in raw_data:
             partner = order.get("partner")
 
@@ -377,3 +413,7 @@ class VTPOrderReport(Report):
 
                 data.append(row)
         return len(data)
+
+def format_updated_at(updated_at_str):
+    dt = datetime.fromisoformat(updated_at_str)
+    return dt.strftime("%d/%m/%Y")

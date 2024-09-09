@@ -6,3 +6,7 @@ loguru
 PySide6
 pyinstaller
 openpyxl
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
