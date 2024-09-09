@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumHeight: height
     maximumWidth: width
     maximumHeight: height
-    title: qsTr("TimeGroup Report Generator")
+    title: qsTr("TimeGroup Reporter")
     Material.theme: Material.Light
     Material.accent: "#4f46e5"
     Material.primary: "#4f46e5"
@@ -32,7 +32,7 @@ ApplicationWindow {
             Text {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
-                text: qsTr("TimeGroup Report Studio")
+                text: qsTr("TimeGroup Reporter")
                 font.pixelSize: 28
                 font.bold: true
                 color: "#4f46e5"
@@ -68,10 +68,25 @@ ApplicationWindow {
                     Material.accent: "#4f46e5"
                 }
 
+                TextField {
+                    id: spreadsheetUrlInput
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Nhập URL Google Spreadsheet URL")
+                    font.pixelSize: 14
+                    color: "#374151"
+                    background: Rectangle {
+                        implicitWidth: 200
+                        implicitHeight: 40
+                        color: "white"
+                        border.color: spreadsheetUrlInput.focus ? "#4f46e5" : "#d1d5db"
+                        radius: 4
+                    }
+                }
+
                 Button {
                     id: exportButton
                     Layout.fillWidth: true
-                    text: qsTr("Xuất báo cáo")
+                    text: qsTr("Cập nhật báo cáo")
                     font.pixelSize: 16
                     font.bold: true
                     Material.background: Material.accent
@@ -130,8 +145,16 @@ ApplicationWindow {
 
                 Text {
                     text: qsTr(reportModel.messageInfo)
+                    color: "#4f46e5"
                 }
             }
         }
     }
+
+
+    Component.onCompleted: {
+        x = (Screen.width - width) / 2
+        y = (Screen.height - height) / 2
+    }
+
 }
