@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from typing import Optional, Dict, Tuple
+from functools import lru_cache
 
 import requests
 from loguru import logger
@@ -30,7 +31,7 @@ def request_pancake(path: str = None,
         print(f"Error: {str(e)}")
         return False, str(e)
 
-def request_pancake_all(path, params, api_key):
+def request_pancake_all(path, params, api_key, progress_callback):
     page_number = 1
     total_pages = 1000
     data = []
@@ -42,32 +43,19 @@ def request_pancake_all(path, params, api_key):
 
         request_data = response.get("data", [])
         total_pages = response.get("total_pages", 0)
+
+        if progress_callback:
+            progress_callback(f"Đang xử lý {page_number}/{total_pages}")
+
         page_number += 1
         data += request_data
 
     return data
 
-def request_shop_orders(shop_id, params, api_key):
-    data = request_pancake_all(f"shops/{shop_id}/orders", params=params, api_key=api_key)
+def request_shop_orders(shop_id, params, api_key, progress_callback=None):
+    data = request_pancake_all(f"shops/{shop_id}/orders", params=params, api_key=api_key, progress_callback=progress_callback)
     return data
-    # success, data = request_pancake(f"shops/{shop_id}/orders", params=params, api_key=api_key)
-    # if success:
-    #     orders = data.get("data", [])
-    #     total_pages = data.get("total_pages", 0)
-    #     return orders, total_pages
 
-    # return None, None
-
-def request_product_variations(shop_id, params, api_key):
-    data = request_pancake_all(f"shops/{shop_id}/products/variations", params=params, api_key=api_key)
-    # import json
-    # for item in data[:3]:
-    #     print(json.dumps(item))
+def request_product_variations(shop_id, params, api_key, progress_callback=None):
+    data = request_pancake_all(f"shops/{shop_id}/products/variations", params=params, api_key=api_key, progress_callback=progress_callback)
     return data
-    # success, data = request_pancake(f"shops/{shop_id}/products", params=params, api_key=api_key)
-    # if success:
-    #     orders = data.get("data", [])
-    #     total_pages = data.get("total_pages", 0)
-    #     return orders, total_pages
-
-    # return None, None

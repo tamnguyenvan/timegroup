@@ -5,23 +5,58 @@ shops:
     api_key: 8d4ad058163548738fd2c3c5b40e13d3
     name: 2AM
 
-  time_brand:
-    id: 100017797
-    api_key: c17cef5f3419419f9d02cd36c7926674
-    name: Time Brand
+  # time_brand:
+  #   id: 100017797
+  #   api_key: c17cef5f3419419f9d02cd36c7926674
+  #   name: Time Brand
 
-  6am_group:
-    id: 2077691
-    api_key: e6a0aa6862b6418ba23375f020da8ba2
-    name: 6AM Group
+  # 6am_group:
+  #   id: 2077691
+  #   api_key: e6a0aa6862b6418ba23375f020da8ba2
+  #   name: 6AM Group
 
-  winner_group:
-    id: 230361475
-    api_key: b0cb796a94594517aca34a9b1ba6bb1b
-    name: Winner Group
+  # winner_group:
+  #   id: 230361475
+  #   api_key: b0cb796a94594517aca34a9b1ba6bb1b
+  #   name: Winner Group
 
 reports:
-  2am: 1xdjFUj-1FnPjaTdNLpzkqtlJfHC_mGrIZ-WnSAeqMQY
-  time_brand: 1zl0iOa_ryfSjEtwopMMQOwfjyj3alGdJSrc9AWScJOY
-  6am_group: 1uwIzuerY_ESvZu-NHgxu5jVmgJamPY1RyC98nfGg-xo
-  winner_group: 1-G-jvNApQh7zzypkKeW61LHL_3rf1juro340qDad31o
+  order:
+    don_hang_ghtk:
+      range_name: A2:Q
+      policy: append
+    don_hang_vtp:
+      range_name: A2:Q
+      policy: append
+    ton_kho:
+      range_name: A2:E
+      policy: replace
+    cho_hang:
+      range_name: C2:M
+      policy: replace
+    pos:
+      range_name: A2:F
+      policy: append
+
+    2am:
+      gid: 1xdjFUj-1FnPjaTdNLpzkqtlJfHC_mGrIZ-WnSAeqMQY
+    time_brand:
+      gid: 1zl0iOa_ryfSjEtwopMMQOwfjyj3alGdJSrc9AWScJOY
+
+    6am_group:
+      gid: 1uwIzuerY_ESvZu-NHgxu5jVmgJamPY1RyC98nfGg-xo
+
+    winner_group:
+      gid: 1-G-jvNApQh7zzypkKeW61LHL_3rf1juro340qDad31o
+
+  revenue:
+    gid: 1RkBf2wvFxKn3ktwv0SOg7wLwEVvW8bPL-WHSc4l0DHc
+    don_hang:
+      range_name: C:J
+      policy: append
+    cho_hang_ton_kho:
+      range_name: ["B3:L", "N3:R"]
+      policy: ["replace", "replace"]
+    khu_vuc:
+      range_name: ["A3:D", "F3:I"]
+      policy: ["append", "append"]

@@ -1,5 +1,7 @@
-import re
 from datetime import datetime
+
+from loguru import logger
+
 from timegroup.utils.spreadsheet_utils import get_service, replace_data, append_data
 
 class SpreadSheet:
@@ -12,35 +14,42 @@ class SpreadSheet:
         for report in self._reports:
             sheet_name = report.name
             data = report.data
-            range_name = f"{sheet_name}!{report.range_name}"
+            logger.debug(f"Report {report.name}")
 
-            if report.update_policy == "replace":
-                result = replace_data(
-                    service=self._service,
-                    spreadsheet_id=self._gid,
-                    range_name=range_name,
-                    values=data
-                )
-            elif report.update_policy == "append":
-                result = append_data(
-                    service=self._service,
-                    spreadsheet_id=self._gid,
-                    range_name=range_name,
-                    values=data
-                )
-            else:
-                raise ValueError()
+            if len(data) > 0:
+                if report.update_policy == "replace":
+                    range_name = f"{sheet_name}!{report.range_name}"
+                    logger.debug(f"Sheet name: {sheet_name} range {range_name} rows {len(data)}")
+                    result = replace_data(
+                        service=self._service,
+                        spreadsheet_id=self._gid,
+                        range_name=range_name,
+                        values=data
+                    )
+                elif report.update_policy == "append":
+                    range_name = f"{sheet_name}!{report.range_name}"
+                    logger.debug(f"Sheet name: {sheet_name} range {range_name} rows {len(data)}")
+
+                    result = append_data(
+                        service=self._service,
+                        spreadsheet_id=self._gid,
+                        range_name=range_name,
+                        values=data
+                    )
+                else:
+                    raise ValueError()
 
     def rollback(self):
         pass
 
 class Report:
-    def __init__(self):
+    def __init__(self, name, range_name="", no_column="", update_policy="replace"):
         self._column_names = []
-        self._name = None
+        self._name = name
         self._data = {}
-        self._range_name = ""
-        self._udpate_policy = "replace"
+        self._range_name = range_name
+        self._no_column = no_column
+        self._udpate_policy = update_policy
 
     @property
     def data(self):
@@ -58,24 +67,55 @@ class Report:
     def range_name(self):
         return self._range_name
 
+    @range_name.setter
+    def range_name(self, value):
+        self._range_name = value
+
+    @property
+    def no_column(self):
+        return self._no_column
+
+    @no_column.setter
+    def no_column(self, value):
+        self._no_column = value
+
     @property
     def update_policy(self):
         return self._udpate_policy
 
+    @update_policy.setter
+    def update_policy(self, value):
+        if value != self._udpate_policy:
+            self._udpate_policy = value
+
     @property
     def rows(self):
-        return len(self._data)
+        return len(self._data[self._name])
+
+    def reorder_columns(self, indices):
+        self._column_names = [self._column_names[i] for i in indices]
+
+        data = self._data[self._name]
+        for i, row in enumerate(data):
+            data[i] = [row[idx] for idx in indices]
+        return self._data
+
+    def keep_columns(self, indices):
+        self._column_names = [self._column_names[i] for i in indices]
+
+        data = self._data[self._name]
+        for i, row in enumerate(data):
+            data[i] = [row[idx] for idx in indices]
+        return self._data
 
     def parse(self, raw_data):
         raise NotImplementedError
 
 class POSReport(Report):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name="Pos data"):
+        super().__init__(name=name)
         self._column_names = ["Ngày tạo đơn", "COD", "Tổng số lượng SP", "Số lượng", "Mã sản phẩm", "Mã Mẫu Mã"]
-        self._name = "Pos"
         self._data = {self._name: []}
-        self._range_name = "A2:F"
         self._udpate_policy = "replace"
 
     def parse(self, raw_data):
@@ -96,30 +136,25 @@ class POSReport(Report):
                     if created_order_date is None:
                         continue
 
-                    row[0] = format_updated_at(created_order_date)
+                    row[0] = format_isoformat(created_order_date)
                     row[1] = order["cod"]
                     row[2] = order["total_quantity"]
 
                 row[3] = item["quantity"]
                 variation_info = item["variation_info"]
                 row[4] = variation_info["product_display_id"]
-                # name = variation_info["name"]
-                # if variation_info["fields"]:
-                #     row[5] = " / ".join([name] + [field["name"] + ": " + field["value"] for field in variation_info["fields"]])
                 row[5] = variation_info["display_id"]
 
                 data.append(row)
         return len(data)
 
 class RemainProductReport(Report):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name="TỒN KHO"):
+        super().__init__(name)
         self._column_names = [
             "MA_SP", "MA_MAU_MA", "TON_KHO", "Danh mục", "Tổng nhập"
         ]
-        self._name = "TỒN KHO"
         self._data = {self._name: []}
-        self._range_name = "A2:E"
         self._udpate_policy = "replace"
 
     def parse(self, raw_data):
@@ -145,20 +180,21 @@ class RemainProductReport(Report):
                 warehouse = variations_warehouses[0]
                 row[2] = warehouse["actual_remain_quantity"]
                 row[4] = warehouse["total_quantity"]
+            else:
+                row[2] = 0
+                row[4] = 0
 
             data.append(row)
         return len(data)
 
 class AwaitingOrderReport(Report):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name="CHỜ HÀNG"):
+        super().__init__(name=name)
         self._column_names = [
             "Ngày tạo đơn", "Mã sản phẩm", "Mã Mẫu mã", "Sản phẩm", "Mã đơn hàng",
             "Tổng số lượng SP", "Số lượng", "Giá", "Giảm giá", "Tình trạng kho", "COD"
         ]
-        self._name = "CHỜ HÀNG"
         self._data = {self._name: []}
-        self._range_name = "C2:M"
         self._udpate_policy = "replace"
 
     def parse(self, raw_data):
@@ -179,7 +215,7 @@ class AwaitingOrderReport(Report):
                         continue
 
                     # ngay_tao_don
-                    row[0] = format_updated_at(created_order_date)
+                    row[0] = format_isoformat(created_order_date)
 
                     # ma_don_hang
                     row[4] = order["id"]
@@ -211,33 +247,34 @@ class AwaitingOrderReport(Report):
                 # giam gia
                 row[8] = item["discount_each_product"]
 
+                # tinh trang kho
                 row[9] = ""
                 data.append(row)
 
         return len(data)
 
-
 class GHTKOrderReport(Report):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name="Đơn hàng ghtk data"):
+        super().__init__(name=name)
         self._partner_id = 1
         self._column_names = [
             "MVĐ", "Khách hàng", "SĐT", "Mã sản phẩm", "Mã mẫu mã", "Sản phẩm", "Tổng SL",
             "Số lượng", "COD", "Phí trả cho ĐVVC", "Facebook Page", "PAGE ID",
             "Người xử lý", "NV xác nhận", "Ngày tạo đơn", "Kho hàng", "Ngày gửi"
         ]
-        self._name = "Đơn hàng ghtk"
         self._data = {self._name: []}
-        self._range_name = "A3:Q"
-        self._udpate_policy = "replace"
+        self._udpate_policy = "append"
 
     def parse(self, raw_data):
         data = self._data[self._name]
-        partner_ids = set()
         for order in raw_data:
-            partner = order.get("partner") or {}
+            partner = order.get("partner")
+
+            # ma van don
+            extend_code = partner.get("extend_code")
+
+            # don vi van chuyen
             partner_id = partner.get("partner_id")
-            partner_ids.add(partner_id)
             if partner_id != self._partner_id:
                 continue
 
@@ -245,12 +282,6 @@ class GHTKOrderReport(Report):
             for i, item in enumerate(items):
                 row = ["" for _ in range(len(self._column_names))]
                 if i == 0:
-                    # ma van don
-                    extend_code = partner.get("extend_code", "")
-
-                    # don vi van chuyen
-                    row[0] = extend_code
-
                     # Created date
                     status_history = order.get("status_history", [])
                     created_order_date = None
@@ -261,10 +292,20 @@ class GHTKOrderReport(Report):
                     if created_order_date is None:
                         continue
 
-                    row[0] = extend_code
-                    row[14] = format_updated_at(created_order_date)
-                    row[8] = order["cod"]
-                    row[6] = order["total_quantity"]
+                    row[0] = extend_code[-10:]
+
+                    # bao gom sp
+                    included_products = []
+                    for order_item in items:
+                        variation_info = order_item["variation_info"]
+                        name = variation_info["name"]
+                        if variation_info["fields"]:
+                            included_products.append(" ".join([name] + [field["name"] + " " + field["value"] for field in variation_info["fields"]]))
+                    row[6] = ", ".join(included_products)
+
+                    row[7] = order["total_quantity"]
+                    row[9] = order["cod"]
+                    row[14] = format_isoformat(created_order_date)
 
                     # khach hang
                     customer = order["customer"]
@@ -275,9 +316,7 @@ class GHTKOrderReport(Report):
                     phone_number = (customer.get("phone_numbers") or [""])[0]
                     row[2] = phone_number
 
-                    # phi tra cho DVVC
-                    row[9] = order.get("partner_fee", "")
-
+                    # Facebook page and id
                     page = order["page"]
                     facebook_page = page["name"]
                     page_id = page["id"]
@@ -300,6 +339,11 @@ class GHTKOrderReport(Report):
                     warehouse_info = order["warehouse_info"]
                     row[15] = warehouse_info["name"]
 
+                    # ngay gui
+                    time_send_partner = order.get("time_send_partner")
+                    if time_send_partner:
+                        row[16] = format_isoformat(time_send_partner)
+
                 # ma_san_pham
                 variation_info = item["variation_info"]
                 row[3] = variation_info["product_display_id"]
@@ -313,24 +357,22 @@ class GHTKOrderReport(Report):
                     row[5] = " / ".join([name] + [field["name"] + ": " + field["value"] for field in variation_info["fields"]])
 
                 # so luong
-                row[7] = item["quantity"]
+                row[8] = item["quantity"]
 
                 data.append(row)
         return len(data)
 
 class VTPOrderReport(Report):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name="Đơn hàng vtp data"):
+        super().__init__(name=name)
         self._partner_id = 3
         self._column_names = [
             "MVĐ", "Khách hàng", "SĐT", "Mã sản phẩm", "Mã mẫu mã", "Sản phẩm", "Tổng SL",
             "Số lượng", "COD", "Phí trả cho ĐVVC", "Facebook Page", "PAGE ID",
             "Người xử lý", "NV xác nhận", "Ngày tạo đơn", "Kho hàng", "Ngày gửi"
         ]
-        self._name = "Đơn hàng vtp"
         self._data = {self._name: []}
-        self._range_name = "A3:Q"
-        self._udpate_policy = "replace"
+        self._udpate_policy = "append"
 
     def parse(self, raw_data):
         data = self._data[self._name]
@@ -338,10 +380,12 @@ class VTPOrderReport(Report):
             partner = order.get("partner")
 
             # ma van don
-            extend_code = partner.get("extend_code")
+            order_number_vtp = partner.get("order_number_vtp")
 
             # don vi van chuyen
             partner_id = partner.get("partner_id")
+            if partner_id != self._partner_id:
+                continue
 
             items = order.get("items", [])
             for i, item in enumerate(items):
@@ -357,10 +401,21 @@ class VTPOrderReport(Report):
                     if created_order_date is None:
                         continue
 
-                    row[0] = extend_code
-                    row[14] = format_updated_at(created_order_date)
-                    row[8] = order["cod"]
-                    row[6] = order["total_quantity"]
+                    # ma van don
+                    row[0] = order_number_vtp
+
+                    # bao gom sp
+                    included_products = []
+                    for order_item in items:
+                        variation_info = order_item["variation_info"]
+                        if variation_info["fields"]:
+                            name = variation_info["name"]
+                            included_products.append(" ".join([name] + [field["name"] + " " + field["value"] for field in variation_info["fields"]]))
+                    row[6] = ", ".join(included_products) + f" x {len(items)}"
+
+                    row[7] = order["total_quantity"]
+                    row[9] = order["cod"]
+                    row[14] = format_isoformat(created_order_date)
 
                     # khach hang
                     customer = order["customer"]
@@ -370,6 +425,34 @@ class VTPOrderReport(Report):
                     # sdt
                     phone_number = (customer.get("phone_numbers") or [""])[0]
                     row[2] = phone_number
+
+                    # Facebook page and id
+                    page = order["page"]
+                    facebook_page = page["name"]
+                    page_id = page["id"]
+                    row[10] = facebook_page
+                    row[11] = page_id
+
+                    # nguoi xu ly
+                    assigning_seller = order["assigning_seller"]
+                    row[12] = assigning_seller["name"]
+
+                    # nguoi xac nhan
+                    confirm_staff = ""
+                    status_history = order.get("status_history", [])
+                    for status_item in status_history:
+                        if status_item["status"] in (1, 11):
+                            confirm_staff = status_item["name"]
+                    row[13] = confirm_staff
+
+                    # kho hang
+                    warehouse_info = order["warehouse_info"]
+                    row[15] = warehouse_info["name"]
+
+                    # ngay gui
+                    time_send_partner = order.get("time_send_partner")
+                    if time_send_partner:
+                        row[16] = format_isoformat(time_send_partner)
 
                 # ma_san_pham
                 variation_info = item["variation_info"]
@@ -384,36 +467,11 @@ class VTPOrderReport(Report):
                     row[5] = " / ".join([name] + [field["name"] + ": " + field["value"] for field in variation_info["fields"]])
 
                 # so luong
-                row[7] = item["quantity"]
-
-                # phi tra cho DVVC
-                row[9] = item.get("partner_fee", "")
-
-                page = order["page"]
-                facebook_page = page["name"]
-                page_id = page["id"]
-                row[10] = facebook_page
-                row[11] = page_id
-
-                # nguoi xu ly
-                assigning_seller = order["assigning_seller"]
-                row[12] = assigning_seller["name"]
-
-                # nguoi xac nhan
-                confirm_staff = ""
-                status_history = order.get("status_history", [])
-                for status_item in status_history:
-                    if status_item["status"] in (1, 11):
-                        confirm_staff = status_item["name"]
-                row[13] = confirm_staff
-
-                # kho hang
-                warehouse_info = order["warehouse_info"]
-                row[15] = warehouse_info["name"]
+                row[8] = item["quantity"]
 
                 data.append(row)
         return len(data)
 
-def format_updated_at(updated_at_str):
+def format_isoformat(updated_at_str, format="%d/%m/%Y"):
     dt = datetime.fromisoformat(updated_at_str)
-    return dt.strftime("%d/%m/%Y")
+    return dt.strftime(format)

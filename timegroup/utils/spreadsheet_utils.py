@@ -1,21 +1,31 @@
 import os
+import sys
 from pathlib import Path
 from loguru import logger
-import google.auth
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+logger.add("file.log", rotation="50 MB")
 
 def get_service():
     creds = None
     token_file = "token.json"
-    token_path = Path(__file__).parent / token_file
+    if getattr(sys, 'frozen', False):
+        # If running in a PyInstaller bundle
+        base_path = Path(sys._MEIPASS)
+    else:
+        # If running in a regular Python environment
+        base_path = Path(__file__).resolve().parent
+    token_path = os.path.join(base_path, token_file)
+
     if os.path.exists(token_path):
+        logger.debug(f"Credentials found")
         creds = Credentials.from_authorized_user_file(token_path, SCOPES)
     if not creds or not creds.valid:
+        logger.debug(f"Credentials not exists")
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:

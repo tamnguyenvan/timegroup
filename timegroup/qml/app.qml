@@ -73,80 +73,92 @@ ApplicationWindow {
                 }
             }
 
-            // Checkbox group for order report
-            ColumnLayout {
+            // Container for report options
+            Item {
                 Layout.fillWidth: true
-                spacing: 10
-                visible: reportTypeCombo.currentIndex === 0
+                Layout.preferredHeight: Math.max(orderReportOptions.implicitHeight, profitReportOptions.implicitHeight)
 
-                Text {
-                    text: qsTr("Chọn báo cáo:")
-                    font.pixelSize: 14
-                    color: "#374151"
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
+                // Checkbox group for order report
+                ColumnLayout {
+                    id: orderReportOptions
+                    anchors.fill: parent
                     spacing: 10
+                    visible: reportTypeCombo.currentIndex === 0
 
-                    CheckBox {
-                        id: ghtkCheckBox
-                        text: qsTr("Đơn hàng ghtk")
-                        checked: true
+                    Text {
+                        text: qsTr("Chọn báo cáo:")
+                        font.pixelSize: 14
+                        color: "#374151"
                     }
-                    CheckBox {
-                        id: vtpCheckBox
-                        text: qsTr("Đơn hàng vtp")
-                        checked: true
-                    }
-                    CheckBox {
-                        id: inventoryCheckBox
-                        text: qsTr("TỒN KHO")
-                        checked: true
-                    }
-                    CheckBox {
-                        id: waitingCheckBox
-                        text: qsTr("CHỜ HÀNG")
-                        checked: true
-                    }
-                    CheckBox {
-                        id: posCheckBox
-                        text: qsTr("Pos")
-                        checked: true
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 3
+                        rowSpacing: 10
+                        columnSpacing: 20
+
+                        CheckBox {
+                            id: ghtkCheckBox
+                            text: qsTr("Đơn hàng ghtk")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: vtpCheckBox
+                            text: qsTr("Đơn hàng vtp")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: inventoryCheckBox
+                            text: qsTr("Tồn kho")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: waitingCheckBox
+                            text: qsTr("Chờ hàng")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: posCheckBox
+                            text: qsTr("POS")
+                            checked: true
+                        }
                     }
                 }
-            }
 
-            // Checkbox group for profit report
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                visible: reportTypeCombo.currentIndex === 1
-
-                Text {
-                    text: qsTr("Chọn báo cáo:")
-                    font.pixelSize: 14
-                    color: "#374151"
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
+                // Checkbox group for profit report
+                ColumnLayout {
+                    id: profitReportOptions
+                    anchors.fill: parent
                     spacing: 10
+                    visible: reportTypeCombo.currentIndex === 1
 
-                    CheckBox {
-                        id: profitCheckBox1
-                        text: qsTr("Đơn hàng")
-                        checked: true
+                    Text {
+                        text: qsTr("Chọn báo cáo:")
+                        font.pixelSize: 14
+                        color: "#374151"
                     }
-                    CheckBox {
-                        id: profitCheckBox2
-                        text: qsTr("Chờ hàng + TỒN KHO")
-                        checked: true
-                    }
-                    CheckBox {
-                        id: profitCheckBox3
-                        text: qsTr("Khu vực")
-                        checked: true
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        rowSpacing: 10
+                        columnSpacing: 20
+
+                        CheckBox {
+                            id: profitCheckBox1
+                            text: qsTr("Đơn hàng")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: profitCheckBox2
+                            text: qsTr("Chờ hàng + Tồn kho")
+                            checked: true
+                        }
+                        CheckBox {
+                            id: profitCheckBox3
+                            text: qsTr("Khu vực")
+                            checked: true
+                        }
                     }
                 }
             }
@@ -161,7 +173,7 @@ ApplicationWindow {
                 font.bold: true
                 Material.background: Material.accent
                 Material.foreground: "white"
-                enabled: reportModel.isExporting === false
+                enabled: !reportModel.isExporting
 
                 contentItem: RowLayout {
                     spacing: 8
@@ -198,15 +210,15 @@ ApplicationWindow {
 
                         var selectedReports = []
                         if (reportType === "order") {
-                            if (ghtkCheckBox.checked) selectedReports.push(ghtkCheckBox.text)
-                            if (vtpCheckBox.checked) selectedReports.push(vtpCheckBox.text)
-                            if (inventoryCheckBox.checked) selectedReports.push(inventoryCheckBox.text)
-                            if (waitingCheckBox.checked) selectedReports.push(waitingCheckBox.text)
-                            if (posCheckBox.checked) selectedReports.push(posCheckBox.text)
+                            if (ghtkCheckBox.checked) selectedReports.push("Đơn hàng ghtk data")
+                            if (vtpCheckBox.checked) selectedReports.push("Đơn hàng vtp data")
+                            if (inventoryCheckBox.checked) selectedReports.push("TỒN KHO")
+                            if (waitingCheckBox.checked) selectedReports.push("CHỜ HÀNG")
+                            if (posCheckBox.checked) selectedReports.push("Pos data")
                         } else {
-                            if (profitCheckBox1.checked) selectedReports.push("profit1")
-                            if (profitCheckBox2.checked) selectedReports.push("profit2")
-                            if (profitCheckBox3.checked) selectedReports.push("profit3")
+                            if (profitCheckBox1.checked) selectedReports.push("Đơn hàng data")
+                            if (profitCheckBox2.checked) selectedReports.push("Chờ hàng + TỒN KHO")
+                            if (profitCheckBox3.checked) selectedReports.push("Khu vực data")
                         }
 
                         reportModel.exportReport(reportType, timeFrame, selectedReports)
@@ -217,9 +229,12 @@ ApplicationWindow {
             // Message logs
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: qsTr(reportModel.messageInfo)
+                text: reportModel.messageInfo
                 color: "#4f46e5"
                 font.pixelSize: 14
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
             }
         }
     }
