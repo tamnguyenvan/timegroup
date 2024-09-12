@@ -1,3 +1,6 @@
+import yaml
+from collections import OrderedDict
+
 from PySide6.QtCore import QObject, Slot, Signal, Property, QThread
 from loguru import logger
 
@@ -9,16 +12,51 @@ from timegroup.report import (
 from timegroup.utils.pancake_utils import request_shop_orders, request_product_variations
 from timegroup.config import config
 
-logger.add("file.log", rotation="50 MB")
+class ModelConfig(QObject):
+    def __init__(self, config_file):
+        super().__init__()
+        self._config_file = config_file
+        self._config = self._load(config_file)
+
+    def _load(self, config_file):
+        with open(config_file, "r") as f:
+            return yaml.safe_load(f)
+
+    @Slot(str, result=dict)
+    def getValue(self, key):
+        keys = key.split(".")
+        config = self._config
+        for k in keys:
+            config = config.get(k)
+            if config is None:
+                return None
+        return config
+
+    @Slot(str, str)
+    def setValue(self, key, value):
+        keys = key.split(".")
+        config = self._config
+        for k in keys[:-1]:
+            if k not in config:
+                config[k] = OrderedDict()
+            config = config[k]
+        config[keys[-1]] = value
+
+    @Slot()
+    def save(self):
+        """Save the configuration back to the file with order preserved."""
+        with open(self._config_file, "w") as f:
+            yaml.dump(self._config, f, default_flow_style=False, sort_keys=False)
 
 class ReportWorker(QObject):
     """Performs long-running report generation."""
     finished = Signal()
     progress = Signal(str)
 
-    def __init__(self, report_type, time_frame, selected_reports):
+    def __init__(self, report_type, spreadsheet_ids, time_frame, selected_reports):
         super().__init__()
         self.report_type = report_type
+        self.spreadsheet_ids = spreadsheet_ids
         self.time_frame = time_frame
         self.selected_reports = selected_reports
 
@@ -82,7 +120,7 @@ class ReportWorker(QObject):
         reports = []
 
         if "CHỜ HÀNG" in self.selected_reports or "Pos" in self.selected_reports:
-            orders_data = self._fetch_orders_data(shop_id, api_key, start_date, end_date)
+            orders_data = self._fetch_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ liệu đơn hàng")
 
             if "Pos data" in self.selected_reports:
                 reports.append(self._create_pos_report(reports_info["order"]["pos"], orders_data))
@@ -236,14 +274,14 @@ class ReportModel(QObject):
             self._messageInfo = value
             self.messageInfoChanged.emit()
 
-    @Slot(str, str, str)
-    def exportReport(self, report_type, time_frame, selected_reports):
+    @Slot(str, list, str, str)
+    def exportReport(self, report_type, spreadsheet_ids, time_frame, selected_reports):
         if not self.isExporting:
             self.setIsExporting(True)
             self.setMessageInfo("Bắt đầu xuất báo cáo...")
 
             self.thread = QThread()
-            self.worker = ReportWorker(report_type, time_frame, selected_reports)
+            self.worker = ReportWorker(report_type, spreadsheet_ids, time_frame, selected_reports)
 
             self.worker.moveToThread(self.thread)
 

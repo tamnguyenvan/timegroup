@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>../resources/icons/timegroup.svg</file>
         <file>../resources/icons/export.svg</file>
+        <file>../resources/icons/triangle.svg</file>
     </qresource>
 </RCC>

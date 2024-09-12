@@ -6,8 +6,8 @@ import QtQuick.Controls.Material 6.7
 ApplicationWindow {
     id: window
     visible: true
-    width: 800
-    height: 600
+    width: 1000
+    height: 800
     minimumWidth: width
     minimumHeight: height
     maximumWidth: width
@@ -76,7 +76,7 @@ ApplicationWindow {
             // Container for report options
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(orderReportOptions.implicitHeight, profitReportOptions.implicitHeight)
+                Layout.preferredHeight: Math.max(orderReportOptions.implicitHeight, revenueReportOptions.implicitHeight)
 
                 // Checkbox group for order report
                 ColumnLayout {
@@ -125,9 +125,9 @@ ApplicationWindow {
                     }
                 }
 
-                // Checkbox group for profit report
+                // Checkbox group for revenue report
                 ColumnLayout {
-                    id: profitReportOptions
+                    id: revenueReportOptions
                     anchors.fill: parent
                     spacing: 10
                     visible: reportTypeCombo.currentIndex === 1
@@ -145,19 +145,219 @@ ApplicationWindow {
                         columnSpacing: 20
 
                         CheckBox {
-                            id: profitCheckBox1
+                            id: revenueCheckBox1
                             text: qsTr("Đơn hàng")
                             checked: true
                         }
                         CheckBox {
-                            id: profitCheckBox2
+                            id: revenueCheckBox2
                             text: qsTr("Chờ hàng + Tồn kho")
                             checked: true
                         }
                         CheckBox {
-                            id: profitCheckBox3
+                            id: revenueCheckBox3
                             text: qsTr("Khu vực")
                             checked: true
+                        }
+                    }
+                }
+            }
+
+            // Spreadsheets
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 250
+                spacing: 10
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    Image {
+                        id: toggleIcon
+                        source: "qrc:/resources/icons/triangle.svg"
+                        sourceSize.width: 14
+                        sourceSize.height: 14
+                        rotation: spreadsheetScrollArea.visible ? 90 : 0
+                        Behavior on rotation {
+                            NumberAnimation { duration: 200 }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                spreadsheetScrollArea.visible = !spreadsheetScrollArea.visible
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: qsTr("Nâng cao")
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: "#374151"
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        radius: 8
+                        visible: spreadsheetScrollArea.visible
+                    }
+
+                    ScrollView {
+                        id: spreadsheetScrollArea
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        clip: true
+                        visible: false
+
+                        // Order report spreadsheet ids
+                        ColumnLayout {
+                            id: orderReportSpreadsheets
+                            width: parent.width
+                            spacing: 10
+                            visible: reportTypeCombo.currentIndex === 0
+
+                            property var spreadsheetNames: []
+                            property var spreadsheetIds: []
+
+                            Repeater {
+                                model: parent.spreadsheetNames.length
+                                delegate: RowLayout {
+                                    Layout.fillWidth: true
+                                    property var spreadsheetName: parent.spreadsheetNames[index]
+                                    property var spreadsheetId: parent.spreadsheetIds.length > index ? parent.spreadsheetIds[index] : ""
+
+                                    Label {
+                                        text: qsTr(spreadsheetName)
+                                    }
+
+                                    TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: spreadsheetId
+                                        font.pixelSize: 14
+                                        color: "#374151"
+                                        background: Rectangle {
+                                            implicitWidth: 500
+                                            implicitHeight: 40
+                                            color: "white"
+                                            border.color: parent.focus ? "#4f46e5" : "#d1d5db"
+                                            border.width: 1
+                                            radius: 4
+                                        }
+
+                                        onTextChanged: {
+                                            var shops = Object.keys(JSON.parse(JSON.stringify(modelConfig.getValue("shops"))))
+                                            var key = "reports.order." + shops[index] + ".gid"
+
+                                            console.log("key: ", key)
+
+                                            modelConfig.setValue(key, text)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Component.onCompleted: {
+                                var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
+                                var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
+
+                                spreadsheetNames = [];
+                                spreadsheetIds = [];
+
+                                // if (reportTypeCombo.currentIndex === 0) {
+                                //     var keys = Object.keys(shopsConfig)
+                                //     console.log('kkk', keys)
+                                //     for (var key in shopsConfig) {
+                                //         console.log('key', JSON.stringify(shopsConfig), key)
+                                //         spreadsheetNames.push(shopsConfig[key] ? shopsConfig[key]["name"] : "")
+                                //         spreadsheetIds.push(reportsConfig["order"][key] ? reportsConfig["order"][key]["gid"] : "")
+                                //     }
+                                // }
+
+                                spreadsheetNames = [
+                                    shopsConfig["2am"] ? shopsConfig["2am"]["name"] : "",
+                                    shopsConfig["time_brand"] ? shopsConfig["time_brand"]["name"] : "",
+                                    shopsConfig["6am_group"] ? shopsConfig["6am_group"]["name"] : "",
+                                    shopsConfig["winner_group"] ? shopsConfig["winner_group"]["name"] : ""
+                                ];
+                                spreadsheetIds = [
+                                    reportsConfig["order"]["2am"] ? reportsConfig["order"]["2am"]["gid"] || "" : "",
+                                    reportsConfig["order"]["time_brand"] ? reportsConfig["order"]["time_brand"]["gid"] || "" : "",
+                                    reportsConfig["order"]["6am_group"] ? reportsConfig["order"]["6am_group"]["gid"] || "" : "",
+                                    reportsConfig["order"]["winner_group"] ? reportsConfig["order"]["winner_group"]["gid"] || "" : ""
+                                ];
+                            }
+                        }
+
+                        // Revenue report spreadsheet ids
+                        ColumnLayout {
+                            id: revenueReportSpreadsheets
+                            width: parent.width
+                            spacing: 10
+                            visible: reportTypeCombo.currentIndex === 1
+
+                            property var spreadsheetNames: []
+                            property var spreadsheetIds: []
+
+                            Repeater {
+                                model: parent.spreadsheetNames.length
+                                delegate: RowLayout {
+                                    Layout.fillWidth: true
+                                    property var spreadsheetName: parent.spreadsheetNames[index]
+                                    property var spreadsheetId: parent.spreadsheetIds.length > index ? parent.spreadsheetIds[index] : ""
+
+                                    Label {
+                                        text: qsTr(spreadsheetName)
+                                    }
+
+                                    TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: spreadsheetId
+                                        font.pixelSize: 14
+                                        color: "#374151"
+                                        background: Rectangle {
+                                            implicitWidth: 500
+                                            implicitHeight: 40
+                                            color: "white"
+                                            border.color: parent.focus ? "#4f46e5" : "#d1d5db"
+                                            border.width: 1
+                                            radius: 4
+                                        }
+
+                                        onTextChanged: {
+                                            modelConfig.setValue("reports.revenue.gid", text)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Component.onCompleted: {
+                                var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
+                                var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
+
+                                spreadsheetNames = [];
+                                spreadsheetIds = [];
+
+                                if (reportTypeCombo.currentIndex === 0) {
+                                    spreadsheetNames = [
+                                        "Báo cáo lợi nhuận"
+                                    ];
+                                    spreadsheetIds = [
+                                        reportsConfig["revenue"] ? reportsConfig["revenue"]["gid"] || "" : "",
+                                    ];
+                                }
+                            }
                         }
                     }
                 }
@@ -216,12 +416,19 @@ ApplicationWindow {
                             if (waitingCheckBox.checked) selectedReports.push("CHỜ HÀNG")
                             if (posCheckBox.checked) selectedReports.push("Pos data")
                         } else {
-                            if (profitCheckBox1.checked) selectedReports.push("Đơn hàng data")
-                            if (profitCheckBox2.checked) selectedReports.push("Chờ hàng + TỒN KHO")
-                            if (profitCheckBox3.checked) selectedReports.push("Khu vực data")
+                            if (revenueCheckBox1.checked) selectedReports.push("Đơn hàng data")
+                            if (revenueCheckBox2.checked) selectedReports.push("Chờ hàng + TỒN KHO")
+                            if (revenueCheckBox3.checked) selectedReports.push("Khu vực data")
                         }
 
-                        reportModel.exportReport(reportType, timeFrame, selectedReports)
+                        modelConfig.save()
+                        var spreadsheetIds = []
+                        if (reportTypeCombo.currentIndex === 0) {
+                            spreadsheetIds = orderReportSpreadsheets.spreadsheetIds
+                        } else if (reportTypeCombo.currentIndex === 1) {
+                            spreadsheetIds = revenueReportSpreadsheets.spreadsheetIds
+                        }
+                        reportModel.exportReport(reportType, spreadsheetIds, timeFrame, selectedReports)
                     }
                 }
             }

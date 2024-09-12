@@ -8,7 +8,6 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-logger.add("file.log", rotation="50 MB")
 
 def get_service():
     creds = None

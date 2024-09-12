@@ -38,8 +38,8 @@ jobs:
         venv\Scripts\activate
         cd packaging\windows
         pyinstaller --clean --noconfirm timegroup.spec
-        $token = "${{ secrets.GOOGLE_API_KEY }}"
-        $token | Set-Content -Path "dist\TimeGroup\_internal\token.json"
+
+        echo "${{ secrets.GOOGLE_API_KEY }}" | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
 
     - name: Update version in Inno Setup script
       run: |
