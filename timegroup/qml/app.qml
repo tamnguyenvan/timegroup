@@ -428,6 +428,8 @@ ApplicationWindow {
                         } else if (reportTypeCombo.currentIndex === 1) {
                             spreadsheetIds = revenueReportSpreadsheets.spreadsheetIds
                         }
+                        reportModel.log('Report type: ' + reportType + ' spreadsheet ids: ' + spreadsheetIds + ' time frame: ' + timeFrame + ' selected reports: ' selectedReports)
+                        reportModel.log('Exporting...')
                         reportModel.exportReport(reportType, spreadsheetIds, timeFrame, selectedReports)
                     }
                 }

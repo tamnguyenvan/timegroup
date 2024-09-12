@@ -243,8 +243,18 @@ class ReportWorker(QObject):
             spreadsheet.upload()
         except Exception as e:
             logger.error(f"Failed to upload data: {e}")
-            logger.error(f"Failed to upload data: {e}")
             spreadsheet.rollback()
+
+    @Slot
+    def log(self, message, level="info"):
+        if level == "info":
+            logger.info(message)
+        elif level == "debug":
+            logger.debug(message)
+        elif level == "error":
+            logger.error(message)
+        else:
+            logger.info(message)
 
 class ReportModel(QObject):
     reportGenerated = Signal(str)

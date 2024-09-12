@@ -248,7 +248,7 @@ class AwaitingOrderReport(Report):
                 row[8] = item["discount_each_product"]
 
                 # tinh trang kho
-                row[9] = ""
+                row[9] = "Đủ hàng" if item["quantity"] == item["added_to_cart_quantity"] else "Thiếu hàng"
                 data.append(row)
 
         return len(data)
