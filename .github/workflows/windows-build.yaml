@@ -33,6 +33,7 @@ jobs:
         pyinstaller --clean --noconfirm timegroup.spec
     - name: Write token.json
       run: |
+        cd packaging\windows
         $tokenContent = @"
         {
           "token": "${{ secrets.GOOGLE_API_TOKEN }}",
