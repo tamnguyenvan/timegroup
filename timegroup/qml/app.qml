@@ -353,11 +353,13 @@ ApplicationWindow {
                         reportModel.log('3', 'info')
 
                         modelConfig.save()
+                        reportModel.log('4', 'info')
                         var spreadsheetIds = []
                         if (reportTypeCombo.currentIndex === 0) {
                             for (var i = 0; i < spreadsheetSettings.orderReportSpreadsheets.length; ++i) {
                                 spreadsheetIds.push(spreadsheetSettings.orderReportSpreadsheets[i].id)
                             }
+                            reportModel.log('5', 'info')
                         } else if (reportTypeCombo.currentIndex === 1) {
                             for (var i = 0; i < spreadsheetSettings.revenueReportSpreadsheets.length; ++i) {
                                 spreadsheetIds.push(spreadsheetSettings.revenueReportSpreadsheets[i].id)
