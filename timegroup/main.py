@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
@@ -9,7 +11,8 @@ from timegroup.model import ModelConfig, ReportModel
 import timegroup.rc_icons as rc_icons
 import timegroup.rc_main as rc_main
 
-logger.add("timegroup.log", rotation="50 MB")
+log_file = os.path.join(tempfile.gettempdir(), "timegroup.log")
+logger.add(log_file, rotation="50 MB")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
