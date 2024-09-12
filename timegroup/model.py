@@ -10,7 +10,6 @@ from timegroup.report import (
     GHTKOrderReport, VTPOrderReport
 )
 from timegroup.utils.pancake_utils import request_shop_orders, request_product_variations
-from timegroup.config import config
 
 class ModelConfig(QObject):
     def __init__(self, config_file):
@@ -55,6 +54,8 @@ class ReportWorker(QObject):
 
     def __init__(self, report_type, spreadsheet_ids, time_frame, selected_reports):
         super().__init__()
+        from timegroup.config import load_config
+        self.config = load_config()
         self.report_type = report_type
         self.spreadsheet_ids = spreadsheet_ids
         self.time_frame = time_frame
@@ -73,15 +74,15 @@ class ReportWorker(QObject):
         self.finished.emit()
 
     def _generate_revenue_report(self):
-        shops = config["shops"]
-        reports_info = config["reports"]
+        shops = self.config["shops"]
+        reports_info = self.config["reports"]
 
         for shop_code, shop_data in shops.items():
             self._process_shop_revenue(shop_code, shop_data, reports_info)
 
     def _generate_order_report(self):
-        shops = config["shops"]
-        reports_info = config["reports"]
+        shops = self.config["shops"]
+        reports_info = self.config["reports"]
 
         for shop_code, shop_data in shops.items():
             self._process_shop_order(shop_code, shop_data, reports_info)
@@ -278,6 +279,8 @@ class ReportModel(QObject):
 
     @Slot(str, list, str, str)
     def exportReport(self, report_type, spreadsheet_ids, time_frame, selected_reports):
+        self.log("inside exportReport")
+        self.log(str(self.isExporting))
         if not self.isExporting:
             self.setIsExporting(True)
             self.setMessageInfo("Bắt đầu xuất báo cáo...")

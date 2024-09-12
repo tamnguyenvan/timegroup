@@ -5,12 +5,13 @@ from functools import lru_cache
 
 import requests
 from loguru import logger
-from timegroup.config import config
+from timegroup.config import load_config
 
 
 def request_pancake(path: str = None,
                     params: Optional[Dict] = None,
                     api_key: Optional[str] = None) -> Tuple:
+    config = load_config()
     endpoint = config["api_endpoint"]
     api_key = api_key
 

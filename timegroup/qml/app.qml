@@ -324,8 +324,10 @@ ApplicationWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        reportModel.log('Start exporting...', 'info')
                         var timeFrame = timeFrameCombo.model[timeFrameCombo.currentIndex]
                         var reportType = reportTypeCombo.currentIndex === 0 ? "order" : "revenue"
+                        reportModel.log('11111', 'info')
 
                         if (timeFrameCombo.currentIndex === 0) {
                             timeFrame = "yesterday"
@@ -334,6 +336,7 @@ ApplicationWindow {
                         } else if (timeFrameCombo.currentIndex === 2) {
                             timeFrame = "last_month_and_current_month"
                         }
+                        reportModel.log('2', 'info')
 
                         var selectedReports = []
                         if (reportType === "order") {
@@ -347,6 +350,7 @@ ApplicationWindow {
                             if (revenueCheckBox2.checked) selectedReports.push("Chờ hàng + TỒN KHO")
                             if (revenueCheckBox3.checked) selectedReports.push("Khu vực data")
                         }
+                        reportModel.log('3', 'info')
 
                         modelConfig.save()
                         var spreadsheetIds = []
