@@ -1,6 +1,7 @@
 import os
 import shutil
 import yaml
+import sys
 from collections import OrderedDict
 
 from PySide6.QtCore import QObject, Slot, Signal, Property, QThread
@@ -16,27 +17,45 @@ from timegroup.utils.pancake_utils import request_shop_orders, request_product_v
 class ModelConfig(QObject):
     def __init__(self, config_path):
         super().__init__()
-        config_path = self._copy(config_path)
-        self._config_path = config_path
+        self._config_path = self._get_config_path(config_path)
         logger.debug(f"Config file: {self._config_path}")
-        self._config = self._load(config_path)
+        self._config = self._load(self._config_path)
+
+    def _get_config_path(self, original_config_path):
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running in a normal Python environment
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
+        config_file = os.path.basename(original_config_path)
+
+        if sys.platform == 'win32':
+            # On Windows, use LOCALAPPDATA
+            app_data = os.environ.get('LOCALAPPDATA')
+            if app_data:
+                dest_dir = os.path.join(app_data, 'TimeGroup')
+            else:
+                # Fallback to temp directory if LOCALAPPDATA is not available
+                dest_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'TimeGroup')
+        else:
+            # On Unix-like systems, use ~/.config
+            dest_dir = os.path.join(os.path.expanduser('~'), '.config', 'timegroup')
+
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, config_file)
+
+        if not os.path.exists(dest_path):
+            shutil.copy(os.path.join(base_path, original_config_path), dest_path)
+
+        return dest_path
 
     def _load(self, config_file):
         with open(config_file, "r") as f:
             return yaml.safe_load(f)
 
-    def _copy(self, config_path):
-        config_file = os.path.basename(config_path)
-        dest_dir = os.path.expanduser("~/.timegroup")
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir, exist_ok=True)
-        dest_path = os.path.join(dest_dir, config_file)
-
-        if not os.path.exists(dest_path):
-            shutil.copy(config_path, dest_path)
-        return dest_path
-
-    @Slot(str, result=dict)
+    @Slot(str, result="QVariant")
     def getValue(self, key):
         keys = key.split(".")
         config = self._config
@@ -59,7 +78,7 @@ class ModelConfig(QObject):
     @Slot()
     def save(self):
         """Save the configuration back to the file with order preserved."""
-        with open(self._config_file, "w") as f:
+        with open(self._config_path, "w") as f:
             yaml.dump(self._config, f, default_flow_style=False, sort_keys=False)
 
 class ReportWorker(QObject):
