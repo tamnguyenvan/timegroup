@@ -348,12 +348,16 @@ ApplicationWindow {
                             if (revenueCheckBox3.checked) selectedReports.push("Khu vực data")
                         }
 
-                        // modelConfig.save()
+                        modelConfig.save()
                         var spreadsheetIds = []
                         if (reportTypeCombo.currentIndex === 0) {
-                            spreadsheetIds = spreadsheetSettings.orderReportSpreadsheets.spreadsheetIds
+                            for (var i = 0; i < spreadsheetSettings.orderReportSpreadsheets.length; ++i) {
+                                spreadsheetIds.push(spreadsheetSettings.orderReportSpreadsheets[i].id)
+                            }
                         } else if (reportTypeCombo.currentIndex === 1) {
-                            spreadsheetIds = spreadsheetSettings.revenueReportSpreadsheets.spreadsheetIds
+                            for (var i = 0; i < spreadsheetSettings.revenueReportSpreadsheets.length; ++i) {
+                                spreadsheetIds.push(spreadsheetSettings.revenueReportSpreadsheets[i].id)
+                            }
                         }
                         reportModel.log('Report type: ' + reportType + ' spreadsheet ids: ' + spreadsheetIds + ' time frame: ' + timeFrame + ' selected reports: ' + selectedReports, "info")
                         reportModel.log('Exporting...', "info")

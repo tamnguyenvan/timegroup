@@ -238,12 +238,15 @@ class ReportWorker(QObject):
         return vtp_report
 
     def _upload_reports(self, report_gid, reports):
+        spreadsheet = None
         try:
             spreadsheet = SpreadSheet(report_gid, reports)
             spreadsheet.upload()
         except Exception as e:
+            self.progress.emit(f"Failed to upload data: {e}")
             logger.error(f"Failed to upload data: {e}")
-            spreadsheet.rollback()
+            if spreadsheet:
+                spreadsheet.rollback()
 
 class ReportModel(QObject):
     reportGenerated = Signal(str)

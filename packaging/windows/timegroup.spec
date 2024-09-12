@@ -11,6 +11,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('../../timegroup/config.yaml', '.'),
+        ('../../timegroup/resources/icons/timegroup.ico', './resources/icons/'),
         *tcl_tk_data,
     ],
     hiddenimports=[],
