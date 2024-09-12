@@ -1,3 +1,5 @@
+import os
+import shutil
 import yaml
 from collections import OrderedDict
 
@@ -12,14 +14,27 @@ from timegroup.report import (
 from timegroup.utils.pancake_utils import request_shop_orders, request_product_variations
 
 class ModelConfig(QObject):
-    def __init__(self, config_file):
+    def __init__(self, config_path):
         super().__init__()
-        self._config_file = config_file
-        self._config = self._load(config_file)
+        config_path = self._copy(config_path)
+        self._config_path = config_path
+        logger.debug(f"Config file: {self._config_path}")
+        self._config = self._load(config_path)
 
     def _load(self, config_file):
         with open(config_file, "r") as f:
             return yaml.safe_load(f)
+
+    def _copy(self, config_path):
+        config_file = os.path.basename(config_path)
+        dest_dir = os.path.expanduser("~/.timegroup")
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, config_file)
+
+        if not os.path.exists(dest_path):
+            shutil.copy(config_path, dest_path)
+        return dest_path
 
     @Slot(str, result=dict)
     def getValue(self, key):
