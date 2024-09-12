@@ -11,6 +11,7 @@ class SpreadSheet:
         self._service = get_service()
 
     def upload(self):
+        logger.debug(f"Uploading reports: {self._reports}")
         for report in self._reports:
             sheet_name = report.name
             data = report.data

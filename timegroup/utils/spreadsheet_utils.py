@@ -23,6 +23,7 @@ def get_service():
     if os.path.exists(token_path):
         logger.debug(f"Credentials found")
         creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+        logger.debug(f"Loaded credentials")
     if not creds or not creds.valid:
         logger.debug(f"Credentials not exists")
         if creds and creds.expired and creds.refresh_token:
@@ -35,6 +36,7 @@ def get_service():
             creds = flow.run_local_server(port=0)
         with open(token_path, "w") as token:
             token.write(creds.to_json())
+    logger.debug(f"End of get_service")
     return build("sheets", "v4", credentials=creds)
 
 def read_data(service, spreadsheet_id, range_name):

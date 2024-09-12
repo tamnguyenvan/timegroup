@@ -276,6 +276,7 @@ class ReportWorker(QObject):
         spreadsheet = None
         try:
             spreadsheet = SpreadSheet(report_gid, reports)
+            logger.debug(f"Uploading...")
             spreadsheet.upload()
         except Exception as e:
             self.progress.emit(f"Failed to upload data: {e}")
@@ -313,8 +314,6 @@ class ReportModel(QObject):
 
     @Slot(str, list, str, str)
     def exportReport(self, report_type, spreadsheet_ids, time_frame, selected_reports):
-        self.log("inside exportReport")
-        self.log(str(self.isExporting))
         if not self.isExporting:
             self.setIsExporting(True)
             self.setMessageInfo("Bắt đầu xuất báo cáo...")
