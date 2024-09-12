@@ -245,17 +245,6 @@ class ReportWorker(QObject):
             logger.error(f"Failed to upload data: {e}")
             spreadsheet.rollback()
 
-    @Slot
-    def log(self, message, level="info"):
-        if level == "info":
-            logger.info(message)
-        elif level == "debug":
-            logger.debug(message)
-        elif level == "error":
-            logger.error(message)
-        else:
-            logger.info(message)
-
 class ReportModel(QObject):
     reportGenerated = Signal(str)
     isExportingChanged = Signal()
@@ -308,3 +297,14 @@ class ReportModel(QObject):
     def onReportFinished(self):
         self.setIsExporting(False)
         self.reportGenerated.emit("Report generation completed!")
+
+    @Slot(str, str)
+    def log(self, message, level="info"):
+        if level == "info":
+            logger.info(message)
+        elif level == "debug":
+            logger.debug(message)
+        elif level == "error":
+            logger.error(message)
+        else:
+            logger.info(message)
