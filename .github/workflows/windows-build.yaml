@@ -1,23 +1,18 @@
 name: Build and Package for Windows
-
 on:
   push:
     tags:
       - '*.*.*'
-
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-
     - name: Install dependencies
       run: |
         python -m venv venv
@@ -26,21 +21,33 @@ jobs:
         pip install pyinstaller
         pip install -r requirements.txt
       shell: pwsh
-
     - name: Compile resources
       run: |
         venv\Scripts\activate
         cd timegroup
         python compile_resources.py
-
     - name: Build with PyInstaller
       run: |
         venv\Scripts\activate
         cd packaging\windows
         pyinstaller --clean --noconfirm timegroup.spec
-
-        echo "${{ secrets.GOOGLE_API_KEY }}" | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
-
+    - name: Write token.json
+      run: |
+        $tokenContent = @"
+        {
+          "token": "${{ secrets.GOOGLE_API_TOKEN }}",
+          "refresh_token": "${{ secrets.GOOGLE_API_REFRESH_TOKEN }}",
+          "token_uri": "https://oauth2.googleapis.com/token",
+          "client_id": "${{ secrets.GOOGLE_API_CLIENT_ID }}",
+          "client_secret": "${{ secrets.GOOGLE_API_CLIENT_SECRET }}",
+          "scopes": ["https://www.googleapis.com/auth/spreadsheets"],
+          "universe_domain": "googleapis.com",
+          "account": "",
+          "expiry": "2024-09-12T14:44:05.643993Z"
+        }
+        "@
+        $tokenContent | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
+      shell: pwsh
     - name: Update version in Inno Setup script
       run: |
         $version = "${{ github.ref_name }}"
@@ -48,13 +55,11 @@ jobs:
         $newContent = $content -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$version`""
         $newContent | Set-Content -Path packaging/windows/timegroup.iss
       shell: pwsh
-
     - name: Build installer with Inno Setup
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
       with:
         path: packaging/windows/timegroup.iss
         options: /O+ /F"TimeGroup-Setup-${{ github.ref_name }}"
-
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
@@ -62,7 +67,6 @@ jobs:
         path: D:\a\timegroup\timegroup\packaging\windows\Output\TimeGroup-Setup-*.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v1
