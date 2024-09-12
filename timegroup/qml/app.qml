@@ -165,9 +165,33 @@ ApplicationWindow {
 
             // Spreadsheets
             ColumnLayout {
+                id: spreadsheetSettings
                 Layout.fillWidth: true
                 Layout.preferredHeight: 250
                 spacing: 10
+
+                property var orderReportSpreadsheets: []
+                property var revenueReportSpreadsheets: []
+
+                Component.onCompleted: {
+                    loadSpreadsheetConfig()
+                }
+
+                function loadSpreadsheetConfig() {
+                    var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
+                    var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
+
+                    orderReportSpreadsheets = [
+                        {name: shopsConfig["2am"] ? shopsConfig["2am"]["name"] : "2AM", id: reportsConfig["order"]["2am"] ? reportsConfig["order"]["2am"]["gid"] || "" : "", key: "reports.order.2am.gid"},
+                        {name: shopsConfig["time_brand"] ? shopsConfig["time_brand"]["name"] : "Time Brand", id: reportsConfig["order"]["time_brand"] ? reportsConfig["order"]["time_brand"]["gid"] || "" : "", key: "reports.order.time_brand.gid"},
+                        {name: shopsConfig["6am_group"] ? shopsConfig["6am_group"]["name"] : "6AM Group", id: reportsConfig["order"]["6am_group"] ? reportsConfig["order"]["6am_group"]["gid"] || "" : "", key: "reports.order.6am_group.gid"},
+                        {name: shopsConfig["winner_group"] ? shopsConfig["winner_group"]["name"] : "Winner Group", id: reportsConfig["order"]["winner_group"] ? reportsConfig["order"]["winner_group"]["gid"] || "" : "", key: "reports.order.winner_group.gid"}
+                    ];
+
+                    revenueReportSpreadsheets = [
+                        {name: "Báo cáo lợi nhuận", id: reportsConfig["revenue"] ? reportsConfig["revenue"]["gid"] || "" : "", key: "reports.revenue.gid"}
+                    ];
+                }
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -209,9 +233,11 @@ ApplicationWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: "transparent"
+                        color: "#d3dae3"
                         radius: 8
                         visible: spreadsheetScrollArea.visible
+                        border.color: "#e5e7eb"
+                        border.width: 1
                     }
 
                     ScrollView {
@@ -221,34 +247,30 @@ ApplicationWindow {
                         clip: true
                         visible: false
 
-                        // Order report spreadsheet ids
                         ColumnLayout {
-                            id: orderReportSpreadsheets
                             width: parent.width
-                            spacing: 10
-                            visible: reportTypeCombo.currentIndex === 0
-
-                            property var spreadsheetNames: []
-                            property var spreadsheetIds: []
+                            spacing: 15
 
                             Repeater {
-                                model: parent.spreadsheetNames.length
-                                delegate: RowLayout {
+                                model: reportTypeCombo.currentIndex === 0 ? spreadsheetSettings.orderReportSpreadsheets : spreadsheetSettings.revenueReportSpreadsheets
+                                delegate: ColumnLayout {
                                     Layout.fillWidth: true
-                                    property var spreadsheetName: parent.spreadsheetNames[index]
-                                    property var spreadsheetId: parent.spreadsheetIds.length > index ? parent.spreadsheetIds[index] : ""
+                                    spacing: 10
 
-                                    Label {
-                                        text: qsTr(spreadsheetName)
+                                    Text {
+                                        text: modelData.name
+                                        font.pixelSize: 14
+                                        font.bold: true
+                                        color: "#374151"
                                     }
 
                                     TextField {
                                         Layout.fillWidth: true
-                                        placeholderText: spreadsheetId
+                                        placeholderText: modelData.id
                                         font.pixelSize: 14
                                         color: "#374151"
                                         background: Rectangle {
-                                            implicitWidth: 500
+                                            width: parent.width
                                             implicitHeight: 40
                                             color: "white"
                                             border.color: parent.focus ? "#4f46e5" : "#d1d5db"
@@ -257,105 +279,10 @@ ApplicationWindow {
                                         }
 
                                         onTextChanged: {
-                                            var shops = Object.keys(JSON.parse(JSON.stringify(modelConfig.getValue("shops"))))
-                                            var key = "reports.order." + shops[index] + ".gid"
-
-                                            console.log("key: ", key)
-
+                                            var key = modelData.key
                                             modelConfig.setValue(key, text)
                                         }
                                     }
-                                }
-                            }
-
-                            Component.onCompleted: {
-                                var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
-                                var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
-
-                                spreadsheetNames = [];
-                                spreadsheetIds = [];
-
-                                // if (reportTypeCombo.currentIndex === 0) {
-                                //     var keys = Object.keys(shopsConfig)
-                                //     console.log('kkk', keys)
-                                //     for (var key in shopsConfig) {
-                                //         console.log('key', JSON.stringify(shopsConfig), key)
-                                //         spreadsheetNames.push(shopsConfig[key] ? shopsConfig[key]["name"] : "")
-                                //         spreadsheetIds.push(reportsConfig["order"][key] ? reportsConfig["order"][key]["gid"] : "")
-                                //     }
-                                // }
-
-                                spreadsheetNames = [
-                                    shopsConfig["2am"] ? shopsConfig["2am"]["name"] : "",
-                                    shopsConfig["time_brand"] ? shopsConfig["time_brand"]["name"] : "",
-                                    shopsConfig["6am_group"] ? shopsConfig["6am_group"]["name"] : "",
-                                    shopsConfig["winner_group"] ? shopsConfig["winner_group"]["name"] : ""
-                                ];
-                                spreadsheetIds = [
-                                    reportsConfig["order"]["2am"] ? reportsConfig["order"]["2am"]["gid"] || "" : "",
-                                    reportsConfig["order"]["time_brand"] ? reportsConfig["order"]["time_brand"]["gid"] || "" : "",
-                                    reportsConfig["order"]["6am_group"] ? reportsConfig["order"]["6am_group"]["gid"] || "" : "",
-                                    reportsConfig["order"]["winner_group"] ? reportsConfig["order"]["winner_group"]["gid"] || "" : ""
-                                ];
-                            }
-                        }
-
-                        // Revenue report spreadsheet ids
-                        ColumnLayout {
-                            id: revenueReportSpreadsheets
-                            width: parent.width
-                            spacing: 10
-                            visible: reportTypeCombo.currentIndex === 1
-
-                            property var spreadsheetNames: []
-                            property var spreadsheetIds: []
-
-                            Repeater {
-                                model: parent.spreadsheetNames.length
-                                delegate: RowLayout {
-                                    Layout.fillWidth: true
-                                    property var spreadsheetName: parent.spreadsheetNames[index]
-                                    property var spreadsheetId: parent.spreadsheetIds.length > index ? parent.spreadsheetIds[index] : ""
-
-                                    Label {
-                                        text: qsTr(spreadsheetName)
-                                    }
-
-                                    TextField {
-                                        Layout.fillWidth: true
-                                        placeholderText: spreadsheetId
-                                        font.pixelSize: 14
-                                        color: "#374151"
-                                        background: Rectangle {
-                                            implicitWidth: 500
-                                            implicitHeight: 40
-                                            color: "white"
-                                            border.color: parent.focus ? "#4f46e5" : "#d1d5db"
-                                            border.width: 1
-                                            radius: 4
-                                        }
-
-                                        onTextChanged: {
-                                            modelConfig.setValue("reports.revenue.gid", text)
-                                        }
-                                    }
-                                }
-                            }
-
-                            Component.onCompleted: {
-                                var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
-                                var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
-
-                                spreadsheetNames = [];
-                                spreadsheetIds = [];
-
-                                if (reportTypeCombo.currentIndex === 0) {
-                                    spreadsheetNames = [
-                                        "Báo cáo lợi nhuận"
-                                    ];
-                                    spreadsheetIds = [
-                                        reportsConfig["revenue"] ? reportsConfig["revenue"]["gid"] || "" : "",
-                                    ];
                                 }
                             }
                         }
@@ -421,12 +348,12 @@ ApplicationWindow {
                             if (revenueCheckBox3.checked) selectedReports.push("Khu vực data")
                         }
 
-                        modelConfig.save()
+                        // modelConfig.save()
                         var spreadsheetIds = []
                         if (reportTypeCombo.currentIndex === 0) {
-                            spreadsheetIds = orderReportSpreadsheets.spreadsheetIds
+                            spreadsheetIds = spreadsheetSettings.orderReportSpreadsheets.spreadsheetIds
                         } else if (reportTypeCombo.currentIndex === 1) {
-                            spreadsheetIds = revenueReportSpreadsheets.spreadsheetIds
+                            spreadsheetIds = spreadsheetSettings.revenueReportSpreadsheets.spreadsheetIds
                         }
                         reportModel.log('Report type: ' + reportType + ' spreadsheet ids: ' + spreadsheetIds + ' time frame: ' + timeFrame + ' selected reports: ' + selectedReports, "info")
                         reportModel.log('Exporting...', "info")
