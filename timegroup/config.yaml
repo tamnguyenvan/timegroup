@@ -54,8 +54,8 @@ reports:
         - replace
     khu_vuc:
       range_name:
-        - G2:K
-        - L2:P
+        - G2:J
+        - L2:O
       policy:
         - replace
         - replace

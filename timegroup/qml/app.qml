@@ -66,7 +66,7 @@ ApplicationWindow {
                 ComboBox {
                     id: timeFrameCombo
                     Layout.fillWidth: true
-                    model: [qsTr("Hôm qua"), qsTr("Tháng trước"), qsTr("Tháng trước + Tháng này")]
+                    model: [qsTr("Tháng trước + Tháng này"), qsTr("Tháng trước"), qsTr("Hôm qua")]
                     font.pixelSize: 14
                     Material.foreground: "#374151"
                     Material.accent: "#4f46e5"
@@ -338,11 +338,11 @@ ApplicationWindow {
                         var reportType = reportTypeCombo.currentIndex === 0 ? "order" : "revenue"
 
                         if (timeFrameCombo.currentIndex === 0) {
-                            timeFrame = "yesterday"
+                            timeFrame = "last_month_and_current_month"
                         } else if (timeFrameCombo.currentIndex === 1) {
                             timeFrame = "last_month"
                         } else if (timeFrameCombo.currentIndex === 2) {
-                            timeFrame = "last_month_and_current_month"
+                            timeFrame = "yesterday"
                         }
 
                         var selectedReports = []
