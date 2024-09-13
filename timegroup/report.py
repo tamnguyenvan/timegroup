@@ -318,9 +318,9 @@ class GHTKOrderReport(Report):
                     row[2] = phone_number
 
                     # Facebook page and id
-                    page = order["page"]
-                    facebook_page = page["name"]
-                    page_id = page["id"]
+                    page = order.get("page", {})
+                    facebook_page = page.get("name", "")
+                    page_id = page.get("id", "")
                     row[10] = facebook_page
                     row[11] = page_id
 
@@ -428,9 +428,9 @@ class VTPOrderReport(Report):
                     row[2] = phone_number
 
                     # Facebook page and id
-                    page = order["page"]
-                    facebook_page = page["name"]
-                    page_id = page["id"]
+                    page = order.get("page", {})
+                    facebook_page = page.get("name", "")
+                    page_id = page.get("id", "")
                     row[10] = facebook_page
                     row[11] = page_id
 
