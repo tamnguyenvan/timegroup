@@ -113,7 +113,7 @@ class Report:
         raise NotImplementedError
 
 class POSReport(Report):
-    def __init__(self, name="Pos data"):
+    def __init__(self, name="Pos"):
         super().__init__(name=name)
         self._column_names = ["Ngày tạo đơn", "COD", "Tổng số lượng SP", "Số lượng", "Mã sản phẩm", "Mã Mẫu Mã"]
         self._data = {self._name: []}
@@ -255,7 +255,7 @@ class AwaitingOrderReport(Report):
         return len(data)
 
 class GHTKOrderReport(Report):
-    def __init__(self, name="Đơn hàng ghtk data"):
+    def __init__(self, name="Đơn hàng ghtk"):
         super().__init__(name=name)
         self._partner_id = 1
         self._column_names = [
@@ -364,7 +364,7 @@ class GHTKOrderReport(Report):
         return len(data)
 
 class VTPOrderReport(Report):
-    def __init__(self, name="Đơn hàng vtp data"):
+    def __init__(self, name="Đơn hàng vtp"):
         super().__init__(name=name)
         self._partner_id = 3
         self._column_names = [

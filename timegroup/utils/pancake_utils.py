@@ -15,22 +15,18 @@ def request_pancake(path: str = None,
     endpoint = config["api_endpoint"]
     api_key = api_key
 
-    try:
-        url = f"{endpoint}/{path}"
-        api_params = {
-            "api_key": api_key
-        }
-        if params is not None:
-            api_params.update(params)
+    url = f"{endpoint}/{path}"
+    api_params = {
+        "api_key": api_key
+    }
+    if params is not None:
+        api_params.update(params)
 
-        response = requests.get(url, params=api_params)
-        if response.status_code == 200:
-            return True, response.json()
-        else:
-            response.raise_for_status()
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return False, str(e)
+    response = requests.get(url, params=api_params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        response.raise_for_status()
 
 def request_pancake_all(path, params, api_key, progress_callback):
     page_number = 1

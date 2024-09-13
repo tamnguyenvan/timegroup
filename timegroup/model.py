@@ -104,7 +104,6 @@ class ReportWorker(QObject):
         elif self.report_type == "order":
             self._generate_order_report()
 
-        self.progress.emit("Hoàn thành!")
         self.finished.emit()
 
     def _generate_revenue_report(self):
@@ -123,23 +122,23 @@ class ReportWorker(QObject):
 
     def _process_shop_revenue(self, shop_code, shop_data, reports_info):
         shop_id, shop_name, api_key = shop_data["id"], shop_data["name"], shop_data["api_key"]
-        report_gid = reports_info["revenue"]["gid"]
+        report_gid = reports_info["revenue"][shop_code]["gid"]
 
         self.progress.emit(f"Đang xử lý {shop_name}...")
         start_date, end_date = get_time_frame(self.time_frame)
 
         reports = []
 
-        if "Đơn hàng data" in self.selected_reports or "Chờ hàng + TỒN KHO" in self.selected_reports:
+        if "Đơn hàng" in self.selected_reports or "Chờ hàng + TỒN KHO" in self.selected_reports:
             orders_data = self._fetch_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ liệu đơn hàng")
 
-            if "Đơn hàng data" in self.selected_reports:
-                reports.append(self._create_pos_report(reports_info["revenue"]["don_hang"], orders_data, name="Đơn hàng data"))
+            if "Đơn hàng" in self.selected_reports:
+                reports.append(self._create_pos_report(reports_info["revenue"]["don_hang"], orders_data, name="Đơn hàng", reordered_columns=[2, 3, 4, 5, 1, 0]))
 
             if "Chờ hàng + TỒN KHO" in self.selected_reports:
                 reports.extend(self._create_awaiting_and_remain_reports(reports_info["revenue"]["cho_hang_ton_kho"], orders_data, shop_id, api_key, start_date, end_date))
 
-        if "Khu vực data" in self.selected_reports:
+        if "Khu vực" in self.selected_reports:
             reports.extend(self._create_area_reports(reports_info["revenue"]["khu_vuc"], shop_id, api_key, start_date, end_date))
 
         self.progress.emit("Đang cập nhật dữ liệu vào spreadsheet...")
@@ -154,26 +153,31 @@ class ReportWorker(QObject):
 
         reports = []
 
-        if "CHỜ HÀNG" in self.selected_reports or "Pos" in self.selected_reports:
-            orders_data = self._fetch_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ liệu đơn hàng")
+        try:
+            if "CHỜ HÀNG" in self.selected_reports or "Pos" in self.selected_reports:
+                orders_data = self._fetch_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ liệu đơn hàng")
 
-            if "Pos data" in self.selected_reports:
-                reports.append(self._create_pos_report(reports_info["order"]["pos"], orders_data))
+                if "Pos" in self.selected_reports:
+                    reports.append(self._create_pos_report(reports_info["order"]["pos"], orders_data))
 
-            if "CHỜ HÀNG" in self.selected_reports:
-                reports.append(self._create_awaiting_order_report(reports_info["order"]["cho_hang"], orders_data))
+                if "CHỜ HÀNG" in self.selected_reports:
+                    reports.append(self._create_awaiting_order_report(reports_info["order"]["cho_hang"], orders_data))
 
-        if "TỒN KHO" in self.selected_reports:
-            reports.append(self._create_remain_product_report(reports_info["order"]["ton_kho"], shop_id, api_key, start_date, end_date))
+            if "TỒN KHO" in self.selected_reports:
+                reports.append(self._create_remain_product_report(reports_info["order"]["ton_kho"], shop_id, api_key, start_date, end_date))
 
-        if "Đơn hàng ghtk data" in self.selected_reports or "Đơn hàng vtp data" in self.selected_reports:
-            delivery_orders_data = self._fetch_delivery_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ đẩy đẩy sang ĐVVC")
+            if "Đơn hàng ghtk" in self.selected_reports or "Đơn hàng vtp" in self.selected_reports:
+                delivery_orders_data = self._fetch_delivery_orders_data(shop_id, api_key, start_date, end_date, "Đang lấy dữ đẩy đẩy sang ĐVVC")
 
-            if "Đơn hàng ghtk data" in self.selected_reports:
-                reports.append(self._create_ghtk_report(reports_info["order"]["don_hang_ghtk"], delivery_orders_data))
+                if "Đơn hàng ghtk" in self.selected_reports:
+                    reports.append(self._create_ghtk_report(reports_info["order"]["don_hang_ghtk"], delivery_orders_data))
 
-            if "Đơn hàng vtp data" in self.selected_reports:
-                reports.append(self._create_vtp_report(reports_info["order"]["don_hang_vtp"], delivery_orders_data))
+                if "Đơn hàng vtp" in self.selected_reports:
+                    reports.append(self._create_vtp_report(reports_info["order"]["don_hang_vtp"], delivery_orders_data))
+        except Exception as e:
+            logger.error(f"Failed while fetching data: {e}")
+            self.progress.emit(f"Đã lỗi trong lúc lấy dữ liệu: Vui lòng liên hệ IT.")
+            return
 
         self._upload_reports(report_gid, reports)
 
@@ -195,13 +199,14 @@ class ReportWorker(QObject):
         }
         return request_shop_orders(shop_id, params, api_key, progress_callback=lambda x: self.progress.emit(f"{message}. {x}"))
 
-    def _create_pos_report(self, report_info, orders_data, name="Pos data"):
+    def _create_pos_report(self, report_info, orders_data, reordered_columns=None, name="Pos"):
         self.progress.emit("Đang tạo báo cáo Đơn hàng/Pos...")
         pos_report = POSReport(name=name)
         pos_report.range_name = report_info["range_name"]
         pos_report.update_policy = report_info["policy"]
         pos_report.parse(orders_data)
-        pos_report.reorder_columns([2, 3, 4, 5, 1, 0])
+        if reordered_columns:
+            pos_report.reorder_columns(reordered_columns)
         return pos_report
 
     def _create_awaiting_and_remain_reports(self, report_info, orders_data, shop_id, api_key, start_date, end_date):
@@ -225,13 +230,13 @@ class ReportWorker(QObject):
         orders_data = self._fetch_delivery_orders_data(shop_id, api_key, start_date, end_date)
 
         self.progress.emit("Đang tạo báo cáo Đơn hàng GHTK...")
-        ghtk_report = GHTKOrderReport(name="Khu vực data")
+        ghtk_report = GHTKOrderReport(name="Khu vực")
         ghtk_report.range_name = report_info["range_name"][0]
         ghtk_report.parse(orders_data)
         ghtk_report.keep_columns([0, 14, 13, 16])
 
         self.progress.emit("Đang tạo báo cáo Đơn hàng VTP...")
-        vtp_report = VTPOrderReport(name="Khu vực data")
+        vtp_report = VTPOrderReport(name="Khu vực")
         vtp_report.range_name = report_info["range_name"][1]
         vtp_report.parse(orders_data)
         vtp_report.keep_columns([0, 14, 13, 16])
@@ -278,9 +283,10 @@ class ReportWorker(QObject):
             spreadsheet = SpreadSheet(report_gid, reports)
             logger.debug(f"Uploading...")
             spreadsheet.upload()
+            self.progress.emit("Hoàn thành!")
         except Exception as e:
-            self.progress.emit(f"Failed to upload data: {e}")
             logger.error(f"Failed to upload data: {e}")
+            self.progress.emit(f"Đã có lỗi trong khi tải dữ liệu lên. Vui lòng liên hệ IT.")
             if spreadsheet:
                 spreadsheet.rollback()
 

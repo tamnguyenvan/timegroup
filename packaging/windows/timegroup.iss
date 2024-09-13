@@ -63,3 +63,29 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: files; Name: "{tmp}\timegroup.log"
+Type: files; Name: "{localappdata}\TimeGroup\config.yaml"
+
+[Code]
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ConfigPath: string;
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    // Delete log file in the temp directory
+    DeleteFile(ExpandConstant('{tmp}\timegroup.log'));
+
+    // Delete config file in the local app data directory
+    ConfigPath := ExpandConstant('{localappdata}\TimeGroup\config.yaml');
+    if FileExists(ConfigPath) then
+    begin
+      DeleteFile(ConfigPath);
+
+      // Optionally, remove the TimeGroup folder in local app data if it's empty
+      RemoveDir(ExpandConstant('{localappdata}\TimeGroup'));
+    end;
+  end;
+end;

@@ -7,7 +7,7 @@ ApplicationWindow {
     id: window
     visible: true
     width: 1000
-    height: 800
+    height: 900
     minimumWidth: width
     minimumHeight: height
     maximumWidth: width
@@ -26,14 +26,14 @@ ApplicationWindow {
 
         ColumnLayout {
             anchors.centerIn: parent
-            width: Math.min(parent.width - 40, 600)
-            spacing: 20
+            width: Math.min(parent.width - 20, 600)
+            spacing: 40
 
             Text {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: qsTr("TimeGroup Reporter")
-                font.pixelSize: 28
+                font.pixelSize: 50
                 font.bold: true
                 color: "#4f46e5"
             }
@@ -181,16 +181,27 @@ ApplicationWindow {
                     var shopsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("shops")));
                     var reportsConfig = JSON.parse(JSON.stringify(modelConfig.getValue("reports")));
 
-                    orderReportSpreadsheets = [
-                        {name: shopsConfig["2am"] ? shopsConfig["2am"]["name"] : "2AM", id: reportsConfig["order"]["2am"] ? reportsConfig["order"]["2am"]["gid"] || "" : "", key: "reports.order.2am.gid"},
-                        {name: shopsConfig["time_brand"] ? shopsConfig["time_brand"]["name"] : "Time Brand", id: reportsConfig["order"]["time_brand"] ? reportsConfig["order"]["time_brand"]["gid"] || "" : "", key: "reports.order.time_brand.gid"},
-                        {name: shopsConfig["6am_group"] ? shopsConfig["6am_group"]["name"] : "6AM Group", id: reportsConfig["order"]["6am_group"] ? reportsConfig["order"]["6am_group"]["gid"] || "" : "", key: "reports.order.6am_group.gid"},
-                        {name: shopsConfig["winner_group"] ? shopsConfig["winner_group"]["name"] : "Winner Group", id: reportsConfig["order"]["winner_group"] ? reportsConfig["order"]["winner_group"]["gid"] || "" : "", key: "reports.order.winner_group.gid"}
-                    ];
+                    // Generate orderReportSpreadsheets
+                    orderReportSpreadsheets = Object.keys(shopsConfig).map(function(shopKey) {
+                        var shopName = shopsConfig[shopKey].name || shopKey;
+                        var gid = reportsConfig.order && reportsConfig.order[shopKey] ? reportsConfig.order[shopKey].gid || "" : "";
+                        return {
+                            name: `BCDH ${shopName}`,
+                            id: gid,
+                            key: `reports.order.${shopKey}.gid`
+                        };
+                    });
 
-                    revenueReportSpreadsheets = [
-                        {name: "Báo cáo lợi nhuận", id: reportsConfig["revenue"] ? reportsConfig["revenue"]["gid"] || "" : "", key: "reports.revenue.gid"}
-                    ];
+                    // Generate revenueReportSpreadsheets
+                    revenueReportSpreadsheets = Object.keys(shopsConfig).map(function(shopKey) {
+                        var shopName = shopsConfig[shopKey].name || shopKey;
+                        var gid = reportsConfig.revenue && reportsConfig.revenue[shopKey] ? reportsConfig.revenue[shopKey].gid || "" : "";
+                        return {
+                            name: `BCLN ${shopName}`,
+                            id: gid,
+                            key: `reports.revenue.${shopKey}.gid`
+                        };
+                    });
                 }
 
                 RowLayout {
@@ -216,7 +227,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: qsTr("Nâng cao")
+                        text: qsTr("Tùy chỉnh")
                         font.pixelSize: 16
                         font.bold: true
                         color: "#374151"
@@ -295,9 +306,7 @@ ApplicationWindow {
                 id: exportButton
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 200
-                text: qsTr("Cập nhật báo cáo")
-                font.pixelSize: 16
-                font.bold: true
+                text: qsTr("Cập nhật")
                 Material.background: Material.accent
                 Material.foreground: "white"
                 enabled: !reportModel.isExporting
