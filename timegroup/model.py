@@ -126,6 +126,7 @@ class ReportWorker(QObject):
 
         self.progress.emit(f"Đang xử lý {shop_name}...")
         start_date, end_date = get_time_frame(self.time_frame)
+        logger.debug(f"Start date: {start_date} End date: {end_date}")
 
         reports = []
 
@@ -150,6 +151,7 @@ class ReportWorker(QObject):
 
         self.progress.emit(f"Đang xử lý {shop_name}...")
         start_date, end_date = get_time_frame(self.time_frame)
+        logger.debug(f"Start date: {start_date} End date: {end_date}")
 
         reports = []
 

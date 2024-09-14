@@ -347,15 +347,15 @@ ApplicationWindow {
 
                         var selectedReports = []
                         if (reportType === "order") {
-                            if (ghtkCheckBox.checked) selectedReports.push("Đơn hàng ghtk data")
-                            if (vtpCheckBox.checked) selectedReports.push("Đơn hàng vtp data")
+                            if (ghtkCheckBox.checked) selectedReports.push("Đơn hàng ghtk")
+                            if (vtpCheckBox.checked) selectedReports.push("Đơn hàng vtp")
                             if (inventoryCheckBox.checked) selectedReports.push("TỒN KHO")
                             if (waitingCheckBox.checked) selectedReports.push("CHỜ HÀNG")
-                            if (posCheckBox.checked) selectedReports.push("Pos data")
+                            if (posCheckBox.checked) selectedReports.push("Pos")
                         } else {
-                            if (revenueCheckBox1.checked) selectedReports.push("Đơn hàng data")
+                            if (revenueCheckBox1.checked) selectedReports.push("Đơn hàng")
                             if (revenueCheckBox2.checked) selectedReports.push("Chờ hàng + TỒN KHO")
-                            if (revenueCheckBox3.checked) selectedReports.push("Khu vực data")
+                            if (revenueCheckBox3.checked) selectedReports.push("Khu vực")
                         }
 
                         modelConfig.save()
