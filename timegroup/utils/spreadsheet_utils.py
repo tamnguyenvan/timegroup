@@ -2,42 +2,24 @@ import os
 import sys
 from pathlib import Path
 from loguru import logger
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 def get_service():
-    creds = None
-    token_file = "token.json"
     if getattr(sys, 'frozen', False):
-        # If running in a PyInstaller bundle
         base_path = Path(sys._MEIPASS)
     else:
-        # If running in a regular Python environment
         base_path = Path(__file__).resolve().parent
-    token_path = os.path.join(base_path, token_file)
 
-    if os.path.exists(token_path):
-        logger.debug(f"Credentials found")
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-        logger.debug(f"Loaded credentials")
-    if not creds or not creds.valid:
-        logger.debug(f"Credentials not exists")
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            credentials_file = "credentials.json"
-            credentials_path = os.path.join(base_path, credentials_file)
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_path, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(token_path, "w") as token:
-            token.write(creds.to_json())
-    logger.debug(f"End of get_service")
-    return build("sheets", "v4", credentials=creds)
+    service_account_file = os.path.join(base_path, "service_account.json")
+    logger.debug(f"Path to service account: {service_account_file}")
+
+    credentials = service_account.Credentials.from_service_account_file(
+        service_account_file, scopes=SCOPES)
+
+    return build("sheets", "v4", credentials=credentials)
 
 def read_data(service, spreadsheet_id, range_name):
     result = service.spreadsheets().values().get(

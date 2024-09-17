@@ -34,19 +34,7 @@ jobs:
     - name: Write token.json
       run: |
         cd packaging\windows
-        $tokenContent = @"
-        {
-          "token": "${{ secrets.GOOGLE_API_TOKEN }}",
-          "refresh_token": "${{ secrets.GOOGLE_API_REFRESH_TOKEN }}",
-          "token_uri": "https://oauth2.googleapis.com/token",
-          "client_id": "${{ secrets.GOOGLE_API_CLIENT_ID }}",
-          "client_secret": "${{ secrets.GOOGLE_API_CLIENT_SECRET }}",
-          "scopes": ["https://www.googleapis.com/auth/spreadsheets"],
-          "universe_domain": "googleapis.com",
-          "account": "",
-          "expiry": "2024-09-12T14:44:05.643993Z"
-        }
-        "@
+        $tokenContent = @"${{ secrets.GOOGLE_API_TOKEN }}"@
         $tokenContent | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
       shell: pwsh
     - name: Update version in Inno Setup script

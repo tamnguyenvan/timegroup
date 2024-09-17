@@ -16,6 +16,10 @@ shops:
     id: 230361475
     api_key: b0cb796a94594517aca34a9b1ba6bb1b
     name: Winner Group
+  bedding:
+    id: 430384275
+    api_key: bb273ddc02af430eb594e7d8e0770a9e
+    name: Kho Bedding
 reports:
   order:
     don_hang_ghtk:
@@ -41,6 +45,8 @@ reports:
       gid: 1uwIzuerY_ESvZu-NHgxu5jVmgJamPY1RyC98nfGg-xo
     winner_group:
       gid: 1-G-jvNApQh7zzypkKeW61LHL_3rf1juro340qDad31o
+    bedding:
+      gid: 1yhcbXc6nKywKIx7BsALKdS1X_0yDaMS5QiX2law_mjo
   revenue:
     don_hang:
       range_name: C2:H
@@ -67,3 +73,5 @@ reports:
       gid: 1DpLJOOg_ZOtBkCztHQ37bym41PjuNG-q4AEh0vWvzW0
     winner_group:
       gid: 1GSwnewiMTbNJVDmOWQEn2dragTmQ9xWX0Czwa1Xx0H0
+    bedding:
+      gid: 1K6mvOTX6yFh_SOHGkXkDydhDl1hnk_C0vJFvzwqb9MU
