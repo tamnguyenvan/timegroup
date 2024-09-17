@@ -34,7 +34,9 @@ jobs:
     - name: Write token.json
       run: |
         cd packaging\windows
-        $tokenContent = @"${{ secrets.GOOGLE_API_TOKEN }}"@
+        $tokenContent = @"
+        ${{ secrets.GOOGLE_API_TOKEN }}
+        "@
         $tokenContent | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
       shell: pwsh
     - name: Update version in Inno Setup script
