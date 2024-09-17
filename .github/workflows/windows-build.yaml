@@ -37,7 +37,7 @@ jobs:
         $tokenContent = @"
         ${{ secrets.GOOGLE_API_TOKEN }}
         "@
-        $tokenContent | Out-File -FilePath "dist\TimeGroup\_internal\token.json" -Force -Encoding utf8
+        $tokenContent | Out-File -FilePath "dist\TimeGroup\_internal\service_account.json" -Force -Encoding utf8
       shell: pwsh
     - name: Update version in Inno Setup script
       run: |
